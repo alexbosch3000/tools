@@ -1,0 +1,10 @@
+# Configuration Netlify pour tasks-app (Vite + React)
+[build]
+  command   = "npm run build"
+  publish   = "dist"
+
+# Redirige toutes les routes vers index.html (SPA)
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
