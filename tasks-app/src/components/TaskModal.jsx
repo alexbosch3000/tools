@@ -11,12 +11,12 @@ function CloseIcon() {
   )
 }
 
-export default function TaskModal({ task, onSave, onClose }) {
-  const [form, setForm] = useState(
-    task
-      ? { title: task.title, desc: task.desc || '', start: task.start || '', end: task.end || '', priority: task.priority || 'medium' }
-      : EMPTY
-  )
+// prefill : { start, end } pré-rempli depuis la vue calendrier (nouvelle tâche uniquement)
+export default function TaskModal({ task, prefill, onSave, onClose }) {
+  const [form, setForm] = useState(() => {
+    if (task) return { title: task.title, desc: task.desc || '', start: task.start || '', end: task.end || '', priority: task.priority || 'medium' }
+    return { ...EMPTY, start: prefill?.start || '', end: prefill?.end || '' }
+  })
   const [error, setError] = useState('')
   const titleRef = useRef(null)
 
