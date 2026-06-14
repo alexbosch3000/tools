@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# ---- Build stage ----
-FROM maven:3.9-eclipse-temurin-21 AS build
+# ---- Build stage (runs on the native build platform; the jar is arch-independent) ----
+FROM --platform=$BUILDPLATFORM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /src
 # Resolve dependencies first for better layer caching.
 COPY pom.xml .

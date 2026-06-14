@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # Java dependencies across the reactor (root + modules).
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      maven-minor-patch:
+        update-types: [minor, patch]
+
+  # Keep the GitHub Actions used by the workflows current and pinned.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  # Base image used by the Dockerfile.
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly

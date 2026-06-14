@@ -103,6 +103,32 @@ Photos are mounted **read-only**, `/data` is the writable volume for the index a
 the container runs **non-root**, and `--network none` is safe because the app makes no
 outbound connections.
 
+## CI/CD (GitHub Actions)
+
+The full lifecycle runs on GitHub-native features — no external services or secrets beyond
+the built-in `GITHUB_TOKEN`:
+
+- **CI** (`.github/workflows/ci.yml`): on every push to `main` and every pull request,
+  builds and runs the test suite with `./mvnw clean verify` (JDK 21), and uploads the jar
+  and test reports as artifacts.
+- **Release / deploy** (`.github/workflows/release.yml`): on a `vX.Y.Z` tag (or manual
+  dispatch), stamps the project version, builds, attaches the jar to a **GitHub Release**,
+  and pushes a **multi-arch (amd64/arm64) image to GHCR** at
+  `ghcr.io/<owner>/tools` (tags `X.Y.Z`, `X.Y`, `latest`). Pull it on the Synology with
+  `docker pull ghcr.io/<owner>/tools:latest`.
+- **CodeQL** (`.github/workflows/codeql.yml`): static security analysis on push, PR and a
+  weekly schedule, with results in the repository's Security tab.
+- **Dependabot** (`.github/dependabot.yml`): weekly update PRs for Maven dependencies,
+  GitHub Actions and the Docker base image.
+
+Cut a release:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+The build is reproducible via the committed Maven Wrapper (`./mvnw`, pinned to 3.9.11).
+
 ## Security notes
 
 - **Read-only**: never modifies your photos in v1.
