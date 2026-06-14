@@ -1,0 +1,18 @@
+target/
+*/target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# dupscan runtime artifacts
+*.db
+*.db-wal
+*.db-shm
+report.xlsx
+report.csv

@@ -1,0 +1,10 @@
+target/
+*/target/
+.git/
+.idea/
+*.iml
+*.db
+*.db-wal
+*.db-shm
+report.*
+/tmp/
