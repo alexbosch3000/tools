@@ -1,0 +1,27 @@
+# Reusable job: deploys the GitHub Pages artifact uploaded earlier in the same run.
+# The repository has a single Pages site, so only one app workflow may call this.
+name: reusable-pages
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

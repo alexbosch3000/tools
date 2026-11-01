@@ -21,7 +21,7 @@ apps/<app>/
 └── src/               # code and tests, following the stack's conventions
 ```
 
-`<app>` is lowercase kebab-case, short, without a type suffix (`tasks`, not `tasks-app`). The same name is used for the directory, the image (`ghcr.io/<owner>/<repo>/<app>`) and the workflow (`app-<app>.yml`).
+`<app>` is lowercase kebab-case, short, without a type suffix (`my-todo-list`, not `my-todo-list-app`). The same name is used for the directory, the image (`ghcr.io/<owner>/<repo>/<app>`) and the workflow (`app-<app>.yml`).
 
 ## Makefile targets
 
@@ -60,11 +60,12 @@ CI only calls `make ci`, so the pipeline and a developer's machine run the same 
 
 ### Static web app (Node.js build, NGINX runtime)
 
-Reference implementation: [`apps/tasks`](../apps/tasks).
+Reference implementation: [`apps/my-todo-list`](../apps/my-todo-list).
 
 - Node.js version pinned in `.nvmrc`, dependencies locked in `package-lock.json`.
 - Vite for the build, Vitest for tests, ESLint flat config for linting.
 - Runtime image `nginxinc/nginx-unprivileged`, JSON access logs, `/healthz`, security headers including a Content Security Policy without `unsafe-inline` scripts.
+- `make build BASE_PATH=/sub/path/` builds the site for a sub-path (default `/`) into `dist/`. This is what makes the app deployable on GitHub Pages.
 
 ### Java service (Spring Boot, Maven)
 

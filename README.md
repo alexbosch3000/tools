@@ -6,14 +6,14 @@ A monorepo of small, independent applications. Each app is built, tested, packag
 
 | App | Description | Stack | Deployment |
 |---|---|---|---|
-| [tasks](apps/tasks) | Task manager with list and calendar views | React, Vite, NGINX | [GitHub Pages](https://alexbosch3000.github.io/tools/), `ghcr.io/alexbosch3000/tools/tasks` |
+| [my-todo-list](apps/my-todo-list) | Task manager with list and calendar views | React, Vite, NGINX | [GitHub Pages](https://alexbosch3000.github.io/tools/), `ghcr.io/alexbosch3000/tools/my-todo-list` |
 
 ## Quick start
 
 Prerequisites: `make`, Docker, and the toolchain of the app (see its README).
 
 ```bash
-cd apps/tasks
+cd apps/my-todo-list
 make help      # list targets
 make install
 make run       # development server

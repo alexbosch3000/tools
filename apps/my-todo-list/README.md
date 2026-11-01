@@ -1,4 +1,4 @@
-# tasks
+# my-todo-list
 
 Personal task manager with list and calendar views. Static single-page application (React, Vite, Tailwind CSS); tasks are stored in the browser's `localStorage`, no backend.
 
@@ -6,9 +6,9 @@ Personal task manager with list and calendar views. Static single-page applicati
 |---|---|
 | Stack | Node.js 24, React 18, Vite, Tailwind CSS 3, Vitest, ESLint |
 | Runtime | NGINX (unprivileged) serving static files on port `8080` |
-| Image | `ghcr.io/alexbosch3000/tools/tasks` |
+| Image | `ghcr.io/alexbosch3000/tools/my-todo-list` |
 | Live | https://alexbosch3000.github.io/tools/ |
-| CI/CD | [`.github/workflows/app-tasks.yml`](../../.github/workflows/app-tasks.yml) |
+| CI/CD | [`.github/workflows/app-my-todo-list.yml`](../../.github/workflows/app-my-todo-list.yml) |
 
 ## Usage
 
@@ -16,7 +16,7 @@ Personal task manager with list and calendar views. Static single-page applicati
 make install     # npm ci
 make run         # dev server on http://localhost:5173
 make ci          # lint, test, audit, build: same checks as CI
-make image       # build the container image tasks:local
+make image       # build the container image my-todo-list:local
 make image-run   # serve the image on http://localhost:8080
 ```
 
@@ -24,7 +24,7 @@ make image-run   # serve the image on http://localhost:8080
 
 | Variable | Scope | Default | Description |
 |---|---|---|---|
-| `VITE_BASE` | build time | `/` | Public path the app is served from (`/tools/` on GitHub Pages). |
+| `BASE_PATH` | build time (`make build BASE_PATH=/tools/`) | `/` | Public path the app is served from. Set by CI for GitHub Pages. |
 
 ## Operations
 

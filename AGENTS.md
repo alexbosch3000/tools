@@ -50,13 +50,13 @@ When a change touches several apps, run `make ci` in each of them.
 |---|---|---|
 | App directory, image, workflow | kebab-case, no type suffix | `apps/invoice-parser`, `app-invoice-parser.yml` |
 | Files | the stack's convention | `TaskCard.jsx`, `dates.js`, `InvoiceService.java` |
-| Branches | `<type>/<short-description>` | `feat/tasks-recurring`, `fix/tasks-timezone` |
-| Commits | [Conventional Commits](https://www.conventionalcommits.org) with the app as scope | `feat(tasks): add recurring tasks` |
+| Branches | `<type>/<short-description>` | `feat/my-todo-list-recurring`, `fix/my-todo-list-timezone` |
+| Commits | [Conventional Commits](https://www.conventionalcommits.org) with the app as scope | `feat(my-todo-list): add recurring tasks` |
 
 ### Language
 
 - Code, identifiers, comments, commit messages and documentation: English.
-- User-facing text inside an app: the language of that app's audience (French for `tasks`).
+- User-facing text inside an app: the language of that app's audience (French for `my-todo-list`).
 
 ### Comments
 

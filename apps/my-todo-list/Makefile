@@ -1,9 +1,10 @@
 # Standard targets shared by every app in this repository (see docs/app-contract.md).
 # Run `make help` to list them.
 
-APP   := tasks
+APP   := my-todo-list
 IMAGE ?= $(APP):local
 PORT  ?= 8080
+BASE_PATH ?= /
 
 .DEFAULT_GOAL := help
 .PHONY: help install lint test audit build run image image-run ci clean
@@ -23,8 +24,8 @@ test: ## Run unit tests
 audit: ## Fail on high or critical known vulnerabilities
 	npm audit --audit-level=high
 
-build: ## Build the static bundle into dist/
-	npm run build
+build: ## Build the static bundle into dist/, served under BASE_PATH
+	BASE_PATH=$(BASE_PATH) npm run build
 
 run: ## Start the development server with hot reload
 	npm run dev

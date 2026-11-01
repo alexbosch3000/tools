@@ -2,12 +2,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// VITE_BASE is the public path the app is served from:
-//   "/"        container image and local development (default)
-//   "/tools/"  GitHub Pages project site
+// BASE_PATH is the public path the app is served from:
+//   "/"           container image and local development (default)
+//   "/<repo>/"    GitHub Pages project site, set by CI
 export default defineConfig({
   plugins: [react()],
-  base: process.env.VITE_BASE ?? '/',
+  base: process.env.BASE_PATH || '/',
   build: { sourcemap: true },
   test: { environment: 'node', include: ['src/**/*.test.js'] },
 })

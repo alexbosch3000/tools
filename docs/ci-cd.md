@@ -7,8 +7,9 @@ Each app has its own workflow, triggered only by changes in its directory. Share
 | File | Trigger | Purpose |
 |---|---|---|
 | `app-<app>.yml` | push to `main`, pull request, manual; filtered on `apps/<app>/**` | Entry point for one app: chains the reusable workflows and its deployment. |
-| `reusable-node.yml` | called | Sets up Node.js from `.nvmrc` and runs `make ci`. |
+| `reusable-node.yml` | called | Sets up Node.js from `.nvmrc` and runs `make ci`. With `pages: true`, also builds and uploads the GitHub Pages site on `main`. |
 | `reusable-container.yml` | called | Builds the image, scans it, and when `push: true` publishes it to GHCR with a build provenance attestation. |
+| `reusable-pages.yml` | called | Deploys the Pages site uploaded earlier in the same run. |
 | `codeql.yml` | push to `main`, pull request, weekly | SAST for all code and for the workflows themselves. |
 | `dependency-review.yml` | pull request | Blocks new dependencies with high or critical vulnerabilities. |
 
@@ -43,8 +44,20 @@ flowchart LR
 
 | Target | When to use | Notes |
 |---|---|---|
-| GitHub Pages | One static site per repository | Pages hosts a single site: only one app can own it. `tasks` currently does. |
+| GitHub Pages | One static site per repository | Pages hosts a single site: only one app owns it at a time, currently `my-todo-list`. See [Hand over GitHub Pages](#hand-over-github-pages). |
 | Container platform (Kubernetes, Azure Container Apps, ...) | Every other app | Pull the image from GHCR by digest. Declarative deployment (for example an ArgoCD-managed manifest repository) is kept outside this repository. |
+
+## Hand over GitHub Pages
+
+Pages is served at `https://<owner>.github.io/<repo>/`. The app that owns it builds its site with `make build BASE_PATH=/<repo>/` (see the static web app baseline in [app-contract.md](app-contract.md)).
+
+To give Pages to another app, in a single pull request:
+
+1. In the current owner's workflow (`app-my-todo-list.yml`), remove `pages: true` from the `verify` job and delete the `pages` job.
+2. In the new owner's workflow, add `pages: true` to its `verify` job and copy the `pages` job.
+3. Update the Deployment column of the root `README.md` and the owner named in [Deployment targets](#deployment-targets).
+
+The previous app keeps being published as a container image. Two workflows must never deploy Pages at the same time: each deployment replaces the whole site.
 
 ## Supply chain rules
 
@@ -68,4 +81,4 @@ Per-app checks are path-filtered and are skipped when an app is untouched, so th
 
 ## Adding a workflow for a new app
 
-Copy `app-tasks.yml` to `app-<app>.yml`, replace `tasks` with the app name, pick the reusable verify workflow matching the stack, and keep or remove the deployment job. For a stack without a reusable workflow yet, add `reusable-<stack>.yml` following `reusable-node.yml`: set up the toolchain from the app's pin file, then run `make ci`.
+Copy `app-my-todo-list.yml` to `app-<app>.yml`, replace `my-todo-list` with the app name, pick the reusable verify workflow matching the stack, and remove `pages: true` and the `pages` job unless the app takes over GitHub Pages. For a stack without a reusable workflow yet, add `reusable-<stack>.yml` following `reusable-node.yml`: set up the toolchain from the app's pin file, then run `make ci`.
