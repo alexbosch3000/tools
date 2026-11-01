@@ -74,7 +74,7 @@ These settings are not stored in the repository and must be configured once in G
 |---|---|
 | Settings → Pages → Source | GitHub Actions |
 | Settings → Code security | Dependency graph, Dependabot alerts and security updates, secret scanning, push protection and private vulnerability reporting enabled |
-| Settings → Rules → main | Require a pull request, block force pushes, require the `codeql` and `dependency-review` checks |
+| Settings → Rules → main | Require a pull request, block force pushes, require the `dependency-review` and `CodeQL` checks (exact check names, case-sensitive) |
 | Packages → `<app>` → Visibility | Public, or grant access to the consumers of the image |
 
 Per-app checks are path-filtered and are skipped when an app is untouched, so they cannot be marked as required directly: a required check that never runs blocks the pull request.
