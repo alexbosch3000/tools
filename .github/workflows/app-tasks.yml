@@ -1,0 +1,85 @@
+# CI/CD for apps/tasks: verify and scan on every change, then publish the image
+# to GHCR and deploy to GitHub Pages from the default branch.
+name: app-tasks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/tasks/**
+      - .github/workflows/app-tasks.yml
+      - .github/workflows/reusable-node.yml
+      - .github/workflows/reusable-container.yml
+  pull_request:
+    paths:
+      - apps/tasks/**
+      - .github/workflows/app-tasks.yml
+      - .github/workflows/reusable-node.yml
+      - .github/workflows/reusable-container.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    uses: ./.github/workflows/reusable-node.yml
+    with:
+      app: tasks
+
+  container:
+    needs: verify
+    uses: ./.github/workflows/reusable-container.yml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    with:
+      app: tasks
+      push: ${{ github.ref == 'refs/heads/main' }}
+
+  pages:
+    name: deploy-pages
+    if: github.ref == 'refs/heads/main'
+    needs: container
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: apps/tasks
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: apps/tasks/.nvmrc
+          cache: npm
+          cache-dependency-path: apps/tasks/package-lock.json
+
+      - run: make install build
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: apps/tasks/dist
+
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

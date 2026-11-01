@@ -1,0 +1,77 @@
+# App contract
+
+Every directory under `apps/` is an independent application. This document lists what each one must provide so that it can be built, tested, deployed and operated the same way as the others.
+
+## Independence
+
+- An app never imports code, configuration or assets from another app.
+- An app has its own dependency manifest and lockfile, its own `Makefile`, its own `Dockerfile` and its own workflow.
+- Shared behaviour lives in the reusable workflows under `.github/workflows/reusable-*.yml`, not in shared code. If two apps need the same library, publish it as a package or duplicate it deliberately.
+
+## Directory layout
+
+```
+apps/<app>/
+├── README.md          # purpose, usage, configuration, endpoints
+├── Makefile           # standard targets, see below
+├── Dockerfile         # multi-stage, non-root, pinned base images
+├── .dockerignore
+├── <manifest>         # package.json + package-lock.json, pom.xml, ...
+├── <toolchain pin>    # .nvmrc, .java-version, ...
+└── src/               # code and tests, following the stack's conventions
+```
+
+`<app>` is lowercase kebab-case, short, without a type suffix (`tasks`, not `tasks-app`). The same name is used for the directory, the image (`ghcr.io/<owner>/<repo>/<app>`) and the workflow (`app-<app>.yml`).
+
+## Makefile targets
+
+| Target | Required | Behaviour |
+|---|---|---|
+| `help` | yes | Default goal; lists targets. |
+| `install` | yes | Installs dependencies exactly as locked (`npm ci`, `mvn -B dependency:go-offline`, ...). |
+| `lint` | yes | Static analysis and formatting checks. Fails on findings. |
+| `test` | yes | Unit tests, no network or external service required. |
+| `audit` | yes | Fails on known high or critical vulnerabilities in dependencies. |
+| `build` | yes | Produces the deployable artifact. |
+| `ci` | yes | `install lint test audit build`: exactly what CI runs. |
+| `run` | yes | Starts the app locally for development. |
+| `image` | yes | Builds the container image `<app>:local`. |
+| `image-run` | yes | Runs the image with a read-only root filesystem and all capabilities dropped. |
+| `clean` | yes | Removes build output. |
+
+CI only calls `make ci`, so the pipeline and a developer's machine run the same commands.
+
+## Runtime contract
+
+| Concern | Requirement |
+|---|---|
+| Port | HTTP on `8080`. |
+| Health | `GET /healthz` returns `200` when the process can serve traffic. Services with dependencies also expose `GET /readyz`. |
+| Logs | Structured JSON, one event per line, on stdout/stderr. No log files. No secrets or personal data in logs. |
+| Metrics | Services expose Prometheus metrics on `GET /metrics` (or `/actuator/prometheus` for Spring Boot). Static sites are exempt. |
+| Traces | Services use OpenTelemetry and are configured only through the standard `OTEL_*` environment variables (`OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`, ...). Tracing is disabled when no endpoint is set. |
+| Configuration | Environment variables only, documented in the app README with their default. The same image runs in every environment. |
+| Secrets | Injected at runtime (environment or mounted file). Never committed, never baked into the image. |
+| Shutdown | Handles `SIGTERM` and finishes in-flight requests within 30 seconds. |
+| User | Runs as a non-root UID declared with `USER` in the Dockerfile. |
+| Filesystem | Works with a read-only root filesystem; writes only to `/tmp`. |
+
+## Stack baselines
+
+### Static web app (Node.js build, NGINX runtime)
+
+Reference implementation: [`apps/tasks`](../apps/tasks).
+
+- Node.js version pinned in `.nvmrc`, dependencies locked in `package-lock.json`.
+- Vite for the build, Vitest for tests, ESLint flat config for linting.
+- Runtime image `nginxinc/nginx-unprivileged`, JSON access logs, `/healthz`, security headers including a Content Security Policy without `unsafe-inline` scripts.
+
+### Java service (Spring Boot, Maven)
+
+- Maven Wrapper (`mvnw`) committed, Java version pinned in `.java-version` and in `maven.compiler.release`.
+- `make test` runs `./mvnw -B verify`; `make audit` runs the OWASP `dependency-check-maven` plugin or an equivalent scanner.
+- Spring Boot Actuator: map `/healthz` and `/readyz` to the liveness and readiness groups, expose `prometheus` and `health` only.
+- Logs in JSON with `logging.structured.format.console=ecs` (Spring Boot 3.4+).
+- Traces through the OpenTelemetry Java agent, enabled by `JAVA_TOOL_OPTIONS=-javaagent:/otel/opentelemetry-javaagent.jar` and the `OTEL_*` variables.
+- Runtime image based on a JRE-only distroless or Temurin JRE image, non-root.
+- Add `java-kotlin` to the CodeQL matrix and a `maven` entry to `.github/dependabot.yml`.
