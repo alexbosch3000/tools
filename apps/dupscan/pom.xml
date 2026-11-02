@@ -23,22 +23,22 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <!-- Dependency versions (pinned for reproducible, auditable builds) -->
-    <picocli.version>4.7.6</picocli.version>
-    <twelvemonkeys.version>3.12.0</twelvemonkeys.version>
-    <metadata-extractor.version>2.19.0</metadata-extractor.version>
+    <picocli.version>4.7.7</picocli.version>
+    <twelvemonkeys.version>3.15.3</twelvemonkeys.version>
+    <metadata-extractor.version>2.22.0</metadata-extractor.version>
     <poi.version>5.3.0</poi.version>
-    <log4j.version>2.23.1</log4j.version>
-    <sqlite.version>3.47.1.0</sqlite.version>
-    <slf4j.version>2.0.16</slf4j.version>
-    <logback.version>1.5.12</logback.version>
+    <log4j.version>2.26.1</log4j.version>
+    <sqlite.version>3.54.1.0</sqlite.version>
+    <slf4j.version>2.0.20</slf4j.version>
+    <logback.version>1.6.6</logback.version>
     <junit.version>5.11.4</junit.version>
-    <assertj.version>3.26.3</assertj.version>
+    <assertj.version>3.27.7</assertj.version>
 
     <!-- Plugin versions -->
-    <compiler.plugin.version>3.13.0</compiler.plugin.version>
-    <surefire.plugin.version>3.5.2</surefire.plugin.version>
-    <shade.plugin.version>3.6.0</shade.plugin.version>
-    <enforcer.plugin.version>3.5.0</enforcer.plugin.version>
+    <compiler.plugin.version>3.16.0</compiler.plugin.version>
+    <surefire.plugin.version>3.6.1</surefire.plugin.version>
+    <shade.plugin.version>3.6.2</shade.plugin.version>
+    <enforcer.plugin.version>3.7.0</enforcer.plugin.version>
     <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
     <ossindex.plugin.version>3.2.0</ossindex.plugin.version>
   </properties>
