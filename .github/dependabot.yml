@@ -19,6 +19,14 @@ updates:
       npm-minor-and-patch:
         update-types: [minor, patch]
 
+  - package-ecosystem: maven
+    directories: ['/apps/*']
+    schedule:
+      interval: weekly
+    groups:
+      maven-minor-and-patch:
+        update-types: [minor, patch]
+
   - package-ecosystem: docker
     directories: ['/apps/*']
     schedule:

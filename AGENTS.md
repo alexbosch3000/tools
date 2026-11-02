@@ -80,11 +80,13 @@ When a change touches several apps, run `make ci` in each of them.
 
 ### Operability and observability
 
-Apply the runtime contract of [docs/app-contract.md](docs/app-contract.md): port `8080`, `/healthz`, JSON logs on stdout, Prometheus metrics and OpenTelemetry for services, graceful shutdown, configuration through environment variables.
+Apply the runtime contract of [docs/app-contract.md](docs/app-contract.md), which depends on the app's kind. A service listens on port `8080`, answers `/healthz`, exposes Prometheus metrics and OpenTelemetry traces and shuts down gracefully; a user interface and a command-line tool are exempt from part of that, and a command-line tool documents its exit codes instead. JSON logs on stdout, configuration through environment variables, a non-root user and a read-only root filesystem apply to every app.
 
 ### Documentation
 
 Update the app `README.md` whenever usage, configuration, endpoints or data change. Update `README.md` at the root when an app is added or removed, and the docs under `docs/` when a convention changes.
+
+An app that introduces a language, a technology or a kind the repository has not used yet also updates the shared setup, in the same pull request: its baseline and, if needed, its kind in [docs/app-contract.md](docs/app-contract.md), its `reusable-<stack>.yml` in the workflow table of [docs/ci-cd.md](docs/ci-cd.md), the CodeQL matrix and the Dependabot ecosystems. See [Adding a stack](docs/app-contract.md#adding-a-stack).
 
 ## Definition of done
 
