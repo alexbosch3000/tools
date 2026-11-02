@@ -1,0 +1,44 @@
+# CI/CD for apps/dupscan: verify and scan on every change, then publish the image
+# to GHCR from the default branch. Command-line tool, so there is no deployment job.
+name: app-dupscan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/dupscan/**
+      - .github/workflows/app-dupscan.yml
+      - .github/workflows/reusable-java.yml
+      - .github/workflows/reusable-container.yml
+  pull_request:
+    paths:
+      - apps/dupscan/**
+      - .github/workflows/app-dupscan.yml
+      - .github/workflows/reusable-java.yml
+      - .github/workflows/reusable-container.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    uses: ./.github/workflows/reusable-java.yml
+    with:
+      app: dupscan
+
+  container:
+    needs: verify
+    uses: ./.github/workflows/reusable-container.yml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    with:
+      app: dupscan
+      push: ${{ github.ref == 'refs/heads/main' }}

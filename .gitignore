@@ -1,18 +1,22 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
 target/
-*/target/
-*.class
+coverage/
 
-# IDE
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Editors and OS
 .idea/
-*.iml
-.vscode/
-.settings/
-.classpath
-.project
+.vscode/*
+!.vscode/extensions.json
+*.swp
+.DS_Store
 
-# dupscan runtime artifacts
-*.db
-*.db-wal
-*.db-shm
-report.xlsx
-report.csv
+# Claude Code personal settings
+.claude/settings.local.json

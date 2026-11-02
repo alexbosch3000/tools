@@ -1,0 +1,36 @@
+# Reusable job: verifies a Java app through its Makefile (lint, test, audit, build).
+# The JDK comes from the app's .java-version so CI and developers use the same one.
+name: reusable-java
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: App directory name under apps/
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/${{ inputs.app }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version-file: apps/${{ inputs.app }}/.java-version
+          cache: maven
+          cache-dependency-path: apps/${{ inputs.app }}/**/pom.xml
+
+      - run: make ci

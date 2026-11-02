@@ -1,23 +1,33 @@
+# Weekly dependency updates. App directories are matched by glob, so new apps
+# under apps/ using an existing ecosystem are covered without editing this file.
 version: 2
+
 updates:
-  # Java dependencies across the reactor (root + modules).
-  - package-ecosystem: maven
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
     groups:
-      maven-minor-patch:
+      github-actions:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directories: ['/apps/*']
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-and-patch:
         update-types: [minor, patch]
 
-  # Keep the GitHub Actions used by the workflows current and pinned.
-  - package-ecosystem: github-actions
-    directory: "/"
+  - package-ecosystem: maven
+    directories: ['/apps/*']
     schedule:
       interval: weekly
+    groups:
+      maven-minor-and-patch:
+        update-types: [minor, patch]
 
-  # Base image used by the Dockerfile.
   - package-ecosystem: docker
-    directory: "/"
+    directories: ['/apps/*']
     schedule:
       interval: weekly

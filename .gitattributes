@@ -1,0 +1,4 @@
+# Normalize line endings and mark lockfiles as generated.
+* text=auto eol=lf
+*.{png,jpg,jpeg,gif,ico,webp,woff,woff2} binary
+package-lock.json linguist-generated=true

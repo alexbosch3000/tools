@@ -1,0 +1,11 @@
+target
+*/target
+.idea
+.vscode
+*.db
+*.db-wal
+*.db-shm
+*.xlsx
+*.csv
+Dockerfile
+.dockerignore
