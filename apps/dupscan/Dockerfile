@@ -12,7 +12,7 @@ RUN mvn -B -ntp -DskipTests dependency:go-offline || true
 COPY . .
 RUN mvn -B -ntp -DskipTests package
 
-FROM eclipse-temurin:21-jre-alpine@sha256:82cf3d9ccbe1ed46252008d51b2f2329e6b9e8a2f4394c4bebefc3ea7f4b1372
+FROM eclipse-temurin:25-jre-alpine@sha256:56f273059de6b13a6b49fe0ded691ed2d0399bbee76156a8f2d385f7524a3d43
 # Apply OS security fixes published after the base image was built, then create the
 # unprivileged account the container runs as.
 RUN apk upgrade --no-cache \
