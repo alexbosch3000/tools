@@ -8,6 +8,7 @@ Each app has its own workflow, triggered only by changes in its directory. Share
 |---|---|---|
 | `app-<app>.yml` | push to `main`, pull request, manual; filtered on `apps/<app>/**` | Entry point for one app: chains the reusable workflows and its deployment. |
 | `reusable-node.yml` | called | Sets up Node.js from `.nvmrc` and runs `make ci`. With `pages: true`, also builds and uploads the GitHub Pages site on `main`. |
+| `reusable-java.yml` | called | Sets up the JDK from `.java-version` and runs `make ci`. |
 | `reusable-container.yml` | called | Builds the image, scans it, and when `push: true` publishes it to GHCR with a build provenance attestation. |
 | `reusable-pages.yml` | called | Deploys the Pages site uploaded earlier in the same run. |
 | `codeql.yml` | push to `main`, pull request, weekly | SAST for all code and for the workflows themselves. |
@@ -81,4 +82,6 @@ Per-app checks are path-filtered and are skipped when an app is untouched, so th
 
 ## Adding a workflow for a new app
 
-Copy `app-my-todo-list.yml` to `app-<app>.yml`, replace `my-todo-list` with the app name, pick the reusable verify workflow matching the stack, and remove `pages: true` and the `pages` job unless the app takes over GitHub Pages. For a stack without a reusable workflow yet, add `reusable-<stack>.yml` following `reusable-node.yml`: set up the toolchain from the app's pin file, then run `make ci`.
+Copy `app-my-todo-list.yml` to `app-<app>.yml`, replace `my-todo-list` with the app name, pick the reusable verify workflow matching the stack, and remove `pages: true` and the `pages` job unless the app takes over GitHub Pages. Only a user interface deploys; a service deploys from its image and a command-line tool has no deployment job at all, the published image being the deliverable.
+
+For a stack without a reusable workflow yet, add `reusable-<stack>.yml` following `reusable-node.yml`: set up the toolchain from the app's pin file, then run `make ci`. Add it to the table above in the same pull request, and follow [Adding a stack](app-contract.md#adding-a-stack) for the rest of the one-off setup.

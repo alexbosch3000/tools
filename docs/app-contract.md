@@ -8,6 +8,20 @@ Every directory under `apps/` is an independent application. This document lists
 - An app has its own dependency manifest and lockfile, its own `Makefile`, its own `Dockerfile` and its own workflow.
 - Shared behaviour lives in the reusable workflows under `.github/workflows/reusable-*.yml`, not in shared code. If two apps need the same library, publish it as a package or duplicate it deliberately.
 
+## App kinds
+
+Apps are deliberately heterogeneous: any language or technology is allowed, as long as the app
+exposes the same `Makefile` interface and ships its own image and workflow. What an app owes at
+runtime depends on its kind, not on its language.
+
+| Kind | What it is | Runtime rows that apply |
+|---|---|---|
+| Service | Listens for traffic: HTTP or gRPC API, worker consuming a queue. | All of them. |
+| User interface | Built assets served by a web server, or a packaged desktop or mobile bundle. | All but metrics, traces and shutdown. |
+| Command-line tool | Runs to completion and listens on nothing: CLI, batch, scheduled job. | All but port, health, metrics and traces. Documents its exit codes in its README instead. |
+
+An app's kind is stated in the table of the root [README.md](../README.md).
+
 ## Directory layout
 
 ```
@@ -43,11 +57,9 @@ CI only calls `make ci`, so the pipeline and a developer's machine run the same 
 
 ## Runtime contract
 
-The table below describes a **service**. Two other kinds of app exist and are held to the same
-rules except where noted:
-
-- **Static site**: built assets served by a web server. The metrics, traces and shutdown rows do not apply.
-- **Batch tool**: runs to completion and listens on nothing (a command-line tool, a scheduled job). The port, health, metrics and traces rows do not apply; it documents its exit codes in its README instead. Logs, configuration, secrets, user and filesystem rows still apply.
+The rows below describe a service; [App kinds](#app-kinds) says which of them a user interface or
+a command-line tool is exempt from. Logs, configuration, secrets, user and filesystem apply to
+every app whatever its kind.
 
 | Concern | Requirement |
 |---|---|
@@ -94,3 +106,16 @@ Reference implementation: [`apps/dupscan`](../apps/dupscan).
 - Writes only to paths the caller passes and to `$HOME`, which the image sets to `/tmp` so the container still works with a read-only root filesystem.
 - Runtime image based on a Temurin JRE, non-root, with `ENTRYPOINT` on the jar and `CMD ["--help"]`.
 - Verified in CI by `reusable-java.yml`. Add `java-kotlin` to the CodeQL matrix and a `maven` entry to `.github/dependabot.yml`.
+
+### Adding a stack
+
+A language or technology used for the first time is introduced once, then reused. In the same pull
+request as the app that needs it:
+
+1. Write its baseline above: toolchain pin, how each `Makefile` target maps to the stack's tools, and the runtime image.
+2. Add `.github/workflows/reusable-<stack>.yml` — set up the toolchain from the pin file, then run `make ci` — and list it in the workflow table of [ci-cd.md](ci-cd.md).
+3. Add the language to the CodeQL matrix and the package ecosystem to `.github/dependabot.yml`, where each supports it.
+4. Add the app, with its kind, to the table of the root [README.md](../README.md).
+
+A stack that CodeQL or Dependabot does not cover is still allowed: record the gap in its baseline so
+that it reads as a deliberate choice rather than an oversight.

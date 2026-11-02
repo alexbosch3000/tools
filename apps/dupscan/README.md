@@ -8,6 +8,7 @@ renames or deletes anything.
 
 | | |
 |---|---|
+| Kind | [Command-line tool](../../docs/app-contract.md#app-kinds): runs to completion, listens on nothing |
 | Stack | Java 21, Maven, picocli, TwelveMonkeys ImageIO, metadata-extractor, Apache POI, SQLite |
 | Runtime | Command-line tool on a Temurin JRE, non-root UID `10001` |
 | Image | `ghcr.io/alexbosch3000/tools/dupscan` |
@@ -76,8 +77,8 @@ No secrets are needed: the tool makes no outbound network connection.
 
 ## Operations
 
-Batch command-line tool, not a service: it has no HTTP port, no health endpoint and no
-metrics (see the Java CLI baseline in [docs/app-contract.md](../../docs/app-contract.md)).
+A command-line tool, not a service: no HTTP port, no health endpoint, no metrics
+(see [app kinds](../../docs/app-contract.md#app-kinds)).
 
 | Exit code | Meaning |
 |---|---|

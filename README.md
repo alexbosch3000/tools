@@ -4,10 +4,12 @@ A monorepo of small, independent applications. Each app is built, tested, packag
 
 ## Apps
 
-| App | Description | Stack | Deployment |
-|---|---|---|---|
-| [dupscan](apps/dupscan) | Duplicate picture finder, exact and near-duplicate, with Excel and CSV reports | Java 21, Maven, picocli | `ghcr.io/alexbosch3000/tools/dupscan` |
-| [my-todo-list](apps/my-todo-list) | Task manager with list and calendar views | React, Vite, NGINX | [GitHub Pages](https://alexbosch3000.github.io/tools/), `ghcr.io/alexbosch3000/tools/my-todo-list` |
+| App | Kind | Description | Stack | Deployment |
+|---|---|---|---|---|
+| [dupscan](apps/dupscan) | Command-line tool | Finds duplicate pictures, byte-identical and visually near-identical, and reports them to Excel and CSV | Java 21, Maven, picocli | `ghcr.io/alexbosch3000/tools/dupscan` |
+| [my-todo-list](apps/my-todo-list) | User interface | Task manager with list and calendar views | React, Vite, NGINX | [GitHub Pages](https://alexbosch3000.github.io/tools/), `ghcr.io/alexbosch3000/tools/my-todo-list` |
+
+Apps are independent and deliberately heterogeneous: see [app kinds](docs/app-contract.md#app-kinds) for what each kind owes at runtime.
 
 ## Quick start
 
@@ -34,6 +36,7 @@ make ci        # same checks as CI
 
 1. Create `apps/<app>/` following [docs/app-contract.md](docs/app-contract.md).
 2. Add `.github/workflows/app-<app>.yml` as described in [docs/ci-cd.md](docs/ci-cd.md).
-3. Add the app to the table above.
+3. Add the app, with its kind, to the table above.
+4. If its language or technology is new to the repository, follow [Adding a stack](docs/app-contract.md#adding-a-stack).
 
 With Claude Code, `/new-app <name> <stack>` does these steps.
