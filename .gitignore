@@ -1,0 +1,22 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
+target/
+coverage/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Editors and OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+.DS_Store
+
+# Claude Code personal settings
+.claude/settings.local.json

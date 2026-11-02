@@ -1,0 +1,3 @@
+# Default reviewers. Add a line per app when it gets a dedicated owner, e.g.:
+# /apps/my-todo-list/ @alexbosch3000
+* @alexbosch3000
