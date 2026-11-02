@@ -66,7 +66,7 @@ every app whatever its kind.
 | Port | HTTP on `8080`. |
 | Health | `GET /healthz` returns `200` when the process can serve traffic. Services with dependencies also expose `GET /readyz`. |
 | Logs | Structured JSON, one event per line, on stdout/stderr. No log files. No secrets or personal data in logs. |
-| Metrics | Services expose Prometheus metrics on `GET /metrics` (or `/actuator/prometheus` for Spring Boot). Static sites are exempt. |
+| Metrics | Services expose Prometheus metrics on `GET /metrics` (or `/actuator/prometheus` for Spring Boot). |
 | Traces | Services use OpenTelemetry and are configured only through the standard `OTEL_*` environment variables (`OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`, ...). Tracing is disabled when no endpoint is set. |
 | Configuration | Environment variables only, documented in the app README with their default. The same image runs in every environment. |
 | Secrets | Injected at runtime (environment or mounted file). Never committed, never baked into the image. |
