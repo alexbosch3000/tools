@@ -14,7 +14,10 @@ Each app has its own workflow, triggered only by changes in its directory. Share
 | `codeql.yml` | push to `main`, pull request, weekly | SAST for all code and for the workflows themselves. |
 | `dependency-review.yml` | pull request | Blocks new dependencies with high or critical vulnerabilities. |
 
-Dependabot (`.github/dependabot.yml`) opens weekly update pull requests for GitHub Actions, npm and Docker base images in every `apps/*` directory.
+Dependabot (`.github/dependabot.yml`) opens weekly update pull requests for GitHub Actions, npm, Maven and Docker base images in every `apps/*` directory. Two rules keep those pull requests mergeable:
+
+- `react` and `react-dom` are grouped, because their versions must move together.
+- Major versions of the Node.js, Temurin and Maven base images are not proposed. They follow the LTS releases and are bumped by hand, together with `.nvmrc` or `.java-version`, so that CI keeps testing what the image ships. Tailwind CSS major versions are skipped until the app is migrated on purpose.
 
 ## Pipeline of an app
 
