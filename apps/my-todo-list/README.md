@@ -4,7 +4,7 @@ Personal task manager with list and calendar views. Static single-page applicati
 
 | | |
 |---|---|
-| Stack | Node.js 24, React 18, Vite, Tailwind CSS 3, Vitest, ESLint |
+| Stack | Node.js 26, React 18, Vite, Tailwind CSS 3, Vitest, ESLint |
 | Runtime | NGINX (unprivileged) serving static files on port `8080` |
 | Image | `ghcr.io/alexbosch3000/tools/my-todo-list` |
 | Live | https://alexbosch3000.github.io/tools/ |

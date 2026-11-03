@@ -99,7 +99,7 @@ Reference implementation: [`apps/my-todo-list`](../apps/my-todo-list).
 
 Reference implementation: [`apps/dupscan`](../apps/dupscan).
 
-- Maven Wrapper (`mvnw`) committed, Java version pinned in `.java-version` and in `maven.compiler.release`.
+- Maven Wrapper (`mvnw`) committed. `.java-version` pins the JDK used by CI and by the image build, and matches the JRE of the runtime image; `maven.compiler.release` sets the bytecode level, the oldest Java the tool supports.
 - `make lint` runs Checkstyle against the app's own `checkstyle.xml`; `make test` runs `./mvnw -B verify`.
 - `make audit` runs the OSS Index scanner, failing from CVSS 7.0 upwards. Invoke it as `package ossindex:audit` so that a multi-module build resolves its own modules from the reactor.
 - Batch tool, so the port, health, metrics and traces rows of the runtime contract do not apply: the README documents the exit codes instead (`0` success, non-zero for findings and errors).

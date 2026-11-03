@@ -6,7 +6,7 @@ A monorepo of small, independent applications. Each app is built, tested, packag
 
 | App | Kind | Description | Stack | Deployment |
 |---|---|---|---|---|
-| [dupscan](apps/dupscan) | Command-line tool | Finds duplicate pictures, byte-identical and visually near-identical, and reports them to Excel and CSV | Java 21, Maven, picocli | `ghcr.io/alexbosch3000/tools/dupscan` |
+| [dupscan](apps/dupscan) | Command-line tool | Finds duplicate pictures, byte-identical and visually near-identical, and reports them to Excel and CSV | Java 25, Maven, picocli | `ghcr.io/alexbosch3000/tools/dupscan` |
 | [my-todo-list](apps/my-todo-list) | User interface | Task manager with list and calendar views | React, Vite, NGINX | [GitHub Pages](https://alexbosch3000.github.io/tools/), `ghcr.io/alexbosch3000/tools/my-todo-list` |
 
 Apps are independent and deliberately heterogeneous: see [app kinds](docs/app-contract.md#app-kinds) for what each kind owes at runtime.

@@ -9,7 +9,7 @@ renames or deletes anything.
 | | |
 |---|---|
 | Kind | [Command-line tool](../../docs/app-contract.md#app-kinds): runs to completion, listens on nothing |
-| Stack | Java 21, Maven, picocli, TwelveMonkeys ImageIO, metadata-extractor, Apache POI, SQLite |
+| Stack | Java 25, Maven, picocli, TwelveMonkeys ImageIO, metadata-extractor, Apache POI, SQLite |
 | Runtime | Command-line tool on a Temurin JRE, non-root UID `10001` |
 | Image | `ghcr.io/alexbosch3000/tools/dupscan` |
 | CI/CD | [`.github/workflows/app-dupscan.yml`](../../.github/workflows/app-dupscan.yml) |
