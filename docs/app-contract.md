@@ -30,6 +30,8 @@ apps/<app>/
 ├── Makefile           # standard targets, see below
 ├── Dockerfile         # multi-stage, non-root, pinned base images
 ├── .dockerignore
+├── docker-compose.yml       # optional: run the published image on a Docker host such as a Synology NAS
+├── .env.example       # optional: variables read by docker-compose.yml
 ├── <manifest>         # package.json + package-lock.json, pom.xml, ...
 ├── <toolchain pin>    # .nvmrc, .java-version, ...
 └── src/               # code and tests, following the stack's conventions
@@ -51,6 +53,7 @@ apps/<app>/
 | `run` | yes | Starts the app locally for development. |
 | `image` | yes | Builds the container image `<app>:local`. |
 | `image-run` | yes | Runs the image with a read-only root filesystem and all capabilities dropped. |
+| `smoke` | yes | Starts the hardened image and checks that it works: `/healthz` answers for a user interface or a service, a minimal run succeeds for a command-line tool. CI runs it before scanning the image. |
 | `clean` | yes | Removes build output. |
 
 CI only calls `make ci`, so the pipeline and a developer's machine run the same commands.
@@ -72,7 +75,7 @@ every app whatever its kind.
 | Secrets | Injected at runtime (environment or mounted file). Never committed, never baked into the image. |
 | Shutdown | Handles `SIGTERM` and finishes in-flight requests within 30 seconds. |
 | User | Runs as a non-root UID declared with `USER` in the Dockerfile. |
-| Filesystem | Works with a read-only root filesystem; writes only to `/tmp`. |
+| Filesystem | Works with a read-only root filesystem; writes only to `/tmp`. Docker mounts tmpfs `noexec`: an app that loads a native library from `/tmp` mounts it with `exec`. |
 
 ## Stack baselines
 
@@ -99,7 +102,7 @@ Reference implementation: [`apps/my-todo-list`](../apps/my-todo-list).
 
 Reference implementation: [`apps/dupscan`](../apps/dupscan).
 
-- Maven Wrapper (`mvnw`) committed, Java version pinned in `.java-version` and in `maven.compiler.release`.
+- Maven Wrapper (`mvnw`) committed. `.java-version` pins the JDK used by CI and by the image build, and matches the JRE of the runtime image; `maven.compiler.release` sets the bytecode level, the oldest Java the tool supports.
 - `make lint` runs Checkstyle against the app's own `checkstyle.xml`; `make test` runs `./mvnw -B verify`.
 - `make audit` runs the OSS Index scanner, failing from CVSS 7.0 upwards. Invoke it as `package ossindex:audit` so that a multi-module build resolves its own modules from the reactor.
 - Batch tool, so the port, health, metrics and traces rows of the runtime contract do not apply: the README documents the exit codes instead (`0` success, non-zero for findings and errors).

@@ -16,8 +16,14 @@ updates:
     schedule:
       interval: weekly
     groups:
+      react:
+        patterns: [react, react-dom]
       npm-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Tailwind CSS 4 replaces the PostCSS plugin and renames utilities: migrate on purpose.
+      - dependency-name: tailwindcss
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: maven
     directories: ['/apps/*']
@@ -31,3 +37,11 @@ updates:
     directories: ['/apps/*']
     schedule:
       interval: weekly
+    ignore:
+      # Runtime majors follow the LTS releases and move together with .nvmrc and .java-version.
+      - dependency-name: node
+        update-types: ['version-update:semver-major']
+      - dependency-name: eclipse-temurin
+        update-types: ['version-update:semver-major']
+      - dependency-name: maven
+        update-types: ['version-update:semver-major']
