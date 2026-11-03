@@ -1,0 +1,64 @@
+# Service configuration. Every setting that differs between environments comes from an
+# environment variable documented in README.md; the defaults suit local development.
+app:
+  data-dir: ${APP_DATA_DIR:./data}
+  time-zone: ${APP_TIME_ZONE:Europe/Paris}
+
+spring:
+  application:
+    name: family-hub
+  datasource:
+    # SQLite serialises writers: a single connection avoids SQLITE_BUSY errors entirely.
+    url: jdbc:sqlite:${app.data-dir}/family-hub.db?foreign_keys=on&journal_mode=WAL&busy_timeout=10000
+    hikari:
+      maximum-pool-size: 1
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  jackson:
+    deserialization:
+      # Jackson 3 rejects absent primitive fields by default; an absent boolean means false.
+      fail-on-null-for-primitives: false
+  mvc:
+    problemdetails:
+      enabled: true
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          # index.html and the other unversioned files; /assets/ is cached for a year (StaticResourcesConfig).
+          no-cache: true
+
+server:
+  port: 8080
+  shutdown: graceful
+  # Honour X-Forwarded-* headers from a reverse proxy terminating HTTPS.
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      timeout: 30d
+      cookie:
+        name: FAMILYHUB_SESSION
+        http-only: true
+        same-site: lax
+        secure: ${APP_COOKIE_SECURE:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          additional-path: server:/healthz
+        readiness:
+          include: readinessState,db
+          additional-path: server:/readyz
+
+logging:
+  structured:
+    format:
+      console: ecs

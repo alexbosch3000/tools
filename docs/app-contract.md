@@ -90,13 +90,17 @@ Reference implementation: [`apps/my-todo-list`](../apps/my-todo-list).
 
 ### Java service (Spring Boot, Maven)
 
+Reference implementation: [`apps/family-hub`](../apps/family-hub).
+
 - Maven Wrapper (`mvnw`) committed, Java version pinned in `.java-version` and in `maven.compiler.release`.
 - `make test` runs `./mvnw -B verify`; `make audit` runs the OWASP `dependency-check-maven` plugin or an equivalent scanner.
 - Spring Boot Actuator: map `/healthz` and `/readyz` to the liveness and readiness groups, expose `prometheus` and `health` only.
 - Logs in JSON with `logging.structured.format.console=ecs` (Spring Boot 3.4+).
 - Traces through the OpenTelemetry Java agent, enabled by `JAVA_TOOL_OPTIONS=-javaagent:/otel/opentelemetry-javaagent.jar` and the `OTEL_*` variables.
-- Runtime image based on a JRE-only distroless or Temurin JRE image, non-root.
+- Runtime image based on a JRE-only distroless or Temurin JRE image, non-root. The agent jar is copied next to the application jar (for example by `maven-dependency-plugin`) and excluded from it.
 - Add `java-kotlin` to the CodeQL matrix and a `maven` entry to `.github/dependabot.yml`.
+- An embedded user interface lives in `web/` with its own `package.json`, `.nvmrc` and the static web app tooling (Vite, Vitest, ESLint). Every `Makefile` target runs the npm step first, then Maven; Maven packages `web/dist` as static content, so one image serves both. The workflow passes `node-dir: web` to `reusable-java.yml`, and Dependabot covers `/apps/*/web`.
+- Persistence that must run without an external service in `make test`: SQLite on a mounted volume, migrated by Flyway, with `/tmp` mounted `exec` for the driver's native library.
 
 ### Java command-line tool (Maven)
 

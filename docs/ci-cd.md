@@ -8,13 +8,13 @@ Each app has its own workflow, triggered only by changes in its directory. Share
 |---|---|---|
 | `app-<app>.yml` | push to `main`, pull request, manual; filtered on `apps/<app>/**` | Entry point for one app: chains the reusable workflows and its deployment. |
 | `reusable-node.yml` | called | Sets up Node.js from `.nvmrc` and runs `make ci`. With `pages: true`, also builds and uploads the GitHub Pages site on `main`. |
-| `reusable-java.yml` | called | Sets up the JDK from `.java-version` and runs `make ci`. |
+| `reusable-java.yml` | called | Sets up the JDK from `.java-version` and runs `make ci`. With `node-dir`, also sets up Node.js from that directory's `.nvmrc` for an embedded front end. |
 | `reusable-container.yml` | called | Builds the image, smoke-tests it (`make smoke`), scans it, and when `push: true` publishes it to GHCR with a build provenance attestation. |
 | `reusable-pages.yml` | called | Deploys the Pages site uploaded earlier in the same run. |
 | `codeql.yml` | push to `main`, pull request, weekly | SAST for all code and for the workflows themselves. |
 | `dependency-review.yml` | pull request | Blocks new dependencies with high or critical vulnerabilities. |
 
-Dependabot (`.github/dependabot.yml`) opens weekly update pull requests for GitHub Actions, npm, Maven and Docker base images in every `apps/*` directory. Two rules keep those pull requests mergeable:
+Dependabot (`.github/dependabot.yml`) opens weekly update pull requests for GitHub Actions, npm, Maven and Docker base images in every `apps/*` directory, and for npm in `apps/*/web` (front ends embedded in a service). Two rules keep those pull requests mergeable:
 
 - `react` and `react-dom` are grouped, because their versions must move together.
 - Major versions of the Node.js, Temurin and Maven base images are not proposed. They follow the LTS releases and are bumped by hand, together with `.nvmrc` or `.java-version`, so that CI keeps testing what the image ships. Tailwind CSS major versions are skipped until the app is migrated on purpose.

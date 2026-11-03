@@ -1,5 +1,6 @@
 # Reusable job: verifies a Java app through its Makefile (lint, test, audit, build).
-# The JDK comes from the app's .java-version so CI and developers use the same one.
+# The JDK comes from the app's .java-version so CI and developers use the same one. An app that
+# embeds a Node.js front end names its directory in `node-dir`, and Node.js comes from its .nvmrc.
 name: reusable-java
 
 on:
@@ -9,6 +10,11 @@ on:
         description: App directory name under apps/
         required: true
         type: string
+      node-dir:
+        description: Directory of a Node.js front end, relative to the app (e.g. web); empty for none
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -32,5 +38,12 @@ jobs:
           java-version-file: apps/${{ inputs.app }}/.java-version
           cache: maven
           cache-dependency-path: apps/${{ inputs.app }}/**/pom.xml
+
+      - if: inputs.node-dir != ''
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: apps/${{ inputs.app }}/${{ inputs.node-dir }}/.nvmrc
+          cache: npm
+          cache-dependency-path: apps/${{ inputs.app }}/${{ inputs.node-dir }}/package-lock.json
 
       - run: make ci

@@ -31,6 +31,21 @@ To reach it over HTTPS, add a rule in Control Panel → Login Portal → Advance
 
 Tasks are stored in each browser's `localStorage`: they are not shared between devices, nor with the GitHub Pages version of the app.
 
+## family-hub
+
+It answers on `http://<nas>:8081` (`HOST_PORT`). The database lives in `DATA_DIR`, which must exist and belong to the account in `PUID:PGID` before the first start:
+
+```bash
+id <your-dsm-user>                                  # uid=1026(...) gid=100(users) -> PUID=1026, PGID=100
+sudo mkdir -p /volume1/docker/family-hub/data
+sudo chown 1026:100 /volume1/docker/family-hub/data   # your PUID:PGID
+cd /volume1/docker/family-hub && sudo docker compose up -d
+```
+
+Open the app once from the local network and create the first parent account before publishing it: until then, the first visitor would create it. To reach it from outside, add a reverse proxy rule (Control Panel → Login Portal → Advanced → Reverse Proxy) from `https://<hostname>:443` to `http://localhost:8081`, then set `APP_COOKIE_SECURE=true` in `.env` and run `sudo docker compose up -d` again. Never forward port 8081 on the router.
+
+Backups: the *Famille* page offers a consistent copy of the database to download. With Hyper Backup, back up `DATA_DIR` while the container is stopped: a copy of a running SQLite database can miss its latest changes, which are still in `family-hub.db-wal`.
+
 ## dupscan
 
 A scan runs to completion and exits, so the project is started on demand rather than kept running.

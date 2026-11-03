@@ -1,0 +1,14 @@
+/* Tailwind layers plus a few shared component classes. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm
+      focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:bg-slate-100;
+  }
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm;
+  }
+}

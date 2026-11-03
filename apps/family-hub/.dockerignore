@@ -1,0 +1,13 @@
+target
+data
+web/node_modules
+web/dist
+.idea
+.vscode
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
+Dockerfile
+.dockerignore
