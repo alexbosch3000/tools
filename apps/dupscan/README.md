@@ -22,6 +22,7 @@ make ci                                        # lint, test, audit, build: same 
 make run ARGS="scan --path ~/Pictures"         # run the CLI locally
 make image                                     # build the image dupscan:local
 make image-run ARGS="--help"                   # run the image with production hardening
+make smoke                                     # start the hardened image and open its SQLite index
 ```
 
 Running the built jar directly:
@@ -34,10 +35,11 @@ java -jar dupscan-cli/target/dupscan.jar scan \
 ```
 
 From the container, mounting the photos read-only and a writable volume for the index and
-reports:
+reports. `/tmp` is mounted with `exec` because the SQLite driver loads its native library from
+there, and Docker mounts tmpfs `noexec` by default:
 
 ```bash
-docker run --rm --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
+docker run --rm --read-only --tmpfs /tmp:exec --cap-drop ALL --security-opt no-new-privileges \
   -v /volume1/photos:/photos:ro -v /volume1/dupscan:/data \
   ghcr.io/alexbosch3000/tools/dupscan \
   scan --path /photos --index /data/index.db --report /data/dupes.xlsx
@@ -75,6 +77,25 @@ variables affect the process:
 
 No secrets are needed: the tool makes no outbound network connection.
 
+[`docker-compose.yml`](docker-compose.yml) reads these variables from a `.env` file, see [`.env.example`](.env.example):
+
+| Variable | Default | Description |
+|---|---|---|
+| `IMAGE_TAG` | `latest` | Image tag to run; use a `sha-<commit>` tag to pin a version. |
+| `PUID`, `PGID` | `1026`, `100` | NAS user and group the scan runs as. It must read `PHOTOS_DIR` and write `DATA_DIR`. |
+| `PHOTOS_DIR` | `/volume1/photo` | Folder to scan, mounted read-only. |
+| `DATA_DIR` | `/volume1/docker/dupscan` | Folder receiving the index and the reports. |
+| `MEM_LIMIT` | `2g` | Container memory cap; the JVM uses up to 75% of it. |
+
+## Deploy on a Synology NAS
+
+[`docker-compose.yml`](docker-compose.yml) runs one scan on demand with the same hardening as `make image-run`. Setup, scheduling and permissions are in [docs/synology.md](../../docs/synology.md). Each run writes `duplicates.xlsx` and `duplicates.csv` to `DATA_DIR` and keeps the index there, so the next run only hashes new and changed files:
+
+```bash
+cd /volume1/docker/dupscan
+sudo docker compose run --rm dupscan
+```
+
 ## Operations
 
 A command-line tool, not a service: no HTTP port, no health endpoint, no metrics
@@ -89,8 +110,9 @@ A command-line tool, not a service: no HTTP port, no health endpoint, no metrics
 
 - Progress and warnings go to stderr, the report table to stdout. Unreadable or oversized
   files are skipped and logged; one bad file never aborts a run.
-- The container runs as UID `10001` with a read-only root filesystem, writing only to `/tmp`
-  and to the volumes you mount.
+- The container runs as UID `10001` by default, with a read-only root filesystem, writing only
+  to `/tmp` (mounted `exec`, see above) and to the volumes you mount. Override the user with
+  `--user UID:GID` when a volume belongs to another account, as `docker-compose.yml` does.
 - Interrupting a scan is safe: every batch is committed to the index, so the next run resumes
   instead of re-hashing.
 

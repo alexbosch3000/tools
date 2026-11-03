@@ -1,0 +1,40 @@
+# Runs one duplicate scan on a Docker host such as a Synology NAS (Container Manager).
+# Start it on demand with `docker compose run --rm dupscan`. The photos are mounted
+# read-only: the tool never modifies them. Setup and scheduling: docs/synology.md.
+# Variables are read from .env, see .env.example.
+name: dupscan
+
+services:
+  dupscan:
+    image: ghcr.io/alexbosch3000/tools/dupscan:${IMAGE_TAG:-latest}
+    # Run as a NAS user that can read the photos and write to DATA_DIR (see PUID in .env.example).
+    user: "${PUID:-1026}:${PGID:-100}"
+    restart: "no"
+    read_only: true
+    # The SQLite driver loads its native library from /tmp, which must therefore allow exec.
+    tmpfs:
+      - /tmp:exec
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${MEM_LIMIT:-2g}
+    environment:
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
+    volumes:
+      - ${PHOTOS_DIR:-/volume1/photo}:/photos:ro
+      - ${DATA_DIR:-/volume1/docker/dupscan}:/data
+    # The index in /data makes the next scans incremental; @eaDir holds Synology thumbnails.
+    command:
+      - scan
+      - --path=/photos
+      - --exclude=**/@eaDir/**
+      - --index=/data/index.db
+      - --report=/data/duplicates.xlsx
+      - --csv=/data/duplicates.csv
+      - --no-table
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

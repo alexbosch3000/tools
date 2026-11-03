@@ -30,6 +30,8 @@ apps/<app>/
 ├── Makefile           # standard targets, see below
 ├── Dockerfile         # multi-stage, non-root, pinned base images
 ├── .dockerignore
+├── docker-compose.yml       # optional: run the published image on a Docker host such as a Synology NAS
+├── .env.example       # optional: variables read by docker-compose.yml
 ├── <manifest>         # package.json + package-lock.json, pom.xml, ...
 ├── <toolchain pin>    # .nvmrc, .java-version, ...
 └── src/               # code and tests, following the stack's conventions
@@ -51,6 +53,7 @@ apps/<app>/
 | `run` | yes | Starts the app locally for development. |
 | `image` | yes | Builds the container image `<app>:local`. |
 | `image-run` | yes | Runs the image with a read-only root filesystem and all capabilities dropped. |
+| `smoke` | yes | Starts the hardened image and checks that it works: `/healthz` answers for a user interface or a service, a minimal run succeeds for a command-line tool. CI runs it before scanning the image. |
 | `clean` | yes | Removes build output. |
 
 CI only calls `make ci`, so the pipeline and a developer's machine run the same commands.
@@ -72,7 +75,7 @@ every app whatever its kind.
 | Secrets | Injected at runtime (environment or mounted file). Never committed, never baked into the image. |
 | Shutdown | Handles `SIGTERM` and finishes in-flight requests within 30 seconds. |
 | User | Runs as a non-root UID declared with `USER` in the Dockerfile. |
-| Filesystem | Works with a read-only root filesystem; writes only to `/tmp`. |
+| Filesystem | Works with a read-only root filesystem; writes only to `/tmp`. Docker mounts tmpfs `noexec`: an app that loads a native library from `/tmp` mounts it with `exec`. |
 
 ## Stack baselines
 

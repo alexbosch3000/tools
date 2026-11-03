@@ -29,6 +29,7 @@ make ci        # same checks as CI
 |---|---|
 | [docs/app-contract.md](docs/app-contract.md) | Layout, Makefile targets and runtime requirements every app follows |
 | [docs/ci-cd.md](docs/ci-cd.md) | Workflows, images, deployment targets, repository settings |
+| [docs/synology.md](docs/synology.md) | Run the apps on a Synology NAS with Container Manager |
 | [AGENTS.md](AGENTS.md) | Rules for contributors and AI coding agents |
 | [SECURITY.md](SECURITY.md) | How to report a vulnerability |
 

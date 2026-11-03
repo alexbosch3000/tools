@@ -9,7 +9,7 @@ Each app has its own workflow, triggered only by changes in its directory. Share
 | `app-<app>.yml` | push to `main`, pull request, manual; filtered on `apps/<app>/**` | Entry point for one app: chains the reusable workflows and its deployment. |
 | `reusable-node.yml` | called | Sets up Node.js from `.nvmrc` and runs `make ci`. With `pages: true`, also builds and uploads the GitHub Pages site on `main`. |
 | `reusable-java.yml` | called | Sets up the JDK from `.java-version` and runs `make ci`. |
-| `reusable-container.yml` | called | Builds the image, scans it, and when `push: true` publishes it to GHCR with a build provenance attestation. |
+| `reusable-container.yml` | called | Builds the image, smoke-tests it (`make smoke`), scans it, and when `push: true` publishes it to GHCR with a build provenance attestation. |
 | `reusable-pages.yml` | called | Deploys the Pages site uploaded earlier in the same run. |
 | `codeql.yml` | push to `main`, pull request, weekly | SAST for all code and for the workflows themselves. |
 | `dependency-review.yml` | pull request | Blocks new dependencies with high or critical vulnerabilities. |
@@ -32,14 +32,14 @@ flowchart LR
 | Stage | Pull request | `main` |
 |---|---|---|
 | verify | yes | yes |
-| container build and scan | yes | yes |
+| container build, smoke test and scan | yes | yes |
 | image push and attestation | no | yes |
 | deploy | no | yes |
 
 ## Images
 
 - Registry: `ghcr.io/<owner>/<repo>/<app>`.
-- Tags: `sha-<full commit sha>` on every push to `main`, plus `latest`. Deploy by digest or by `sha-` tag, never by `latest`.
+- Tags: `sha-<full commit sha>` on every push to `main`, plus `latest`. Deploy by digest or by `sha-` tag. The Synology `docker-compose.yml` files default to `latest` for convenience on a home NAS: set `IMAGE_TAG` to a `sha-` tag to freeze a version.
 - Labels: OCI `org.opencontainers.image.*` labels, including the source commit.
 - Scan: Grype fails the build on high or critical vulnerabilities that have a fix available.
 - Provenance: verify an image with `gh attestation verify oci://ghcr.io/<owner>/<repo>/<app>:sha-<sha> --owner <owner>`.
@@ -49,6 +49,7 @@ flowchart LR
 | Target | When to use | Notes |
 |---|---|---|
 | GitHub Pages | One static site per repository | Pages hosts a single site: only one app owns it at a time, currently `my-todo-list`. See [Hand over GitHub Pages](#hand-over-github-pages). |
+| Synology NAS (Container Manager) | Private use at home | Each app's `docker-compose.yml` runs the GHCR image; see [synology.md](synology.md). The NAS pulls, nothing is pushed to it. |
 | Container platform (Kubernetes, Azure Container Apps, ...) | Every other app | Pull the image from GHCR by digest. Declarative deployment (for example an ArgoCD-managed manifest repository) is kept outside this repository. |
 
 ## Hand over GitHub Pages

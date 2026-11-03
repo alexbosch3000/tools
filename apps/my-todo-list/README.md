@@ -18,6 +18,7 @@ make run         # dev server on http://localhost:5173
 make ci          # lint, test, audit, build: same checks as CI
 make image       # build the container image my-todo-list:local
 make image-run   # serve the image on http://localhost:8080
+make smoke       # start the hardened image and check /healthz
 ```
 
 ## Configuration
@@ -25,6 +26,12 @@ make image-run   # serve the image on http://localhost:8080
 | Variable | Scope | Default | Description |
 |---|---|---|---|
 | `BASE_PATH` | build time (`make build BASE_PATH=/tools/`) | `/` | Public path the app is served from. Set by CI for GitHub Pages. |
+| `IMAGE_TAG` | `docker-compose.yml` | `latest` | Image tag to run; use a `sha-<commit>` tag to pin a version. |
+| `HOST_PORT` | `docker-compose.yml` | `8080` | Port published on the Docker host. |
+
+## Deploy on a Synology NAS
+
+[`docker-compose.yml`](docker-compose.yml) runs the published image with the same hardening as `make image-run` (read-only filesystem, no capabilities, log rotation). Copy it with [`.env.example`](.env.example) renamed to `.env` to the NAS and follow [docs/synology.md](../../docs/synology.md). The app then answers on `http://<nas>:8080`. Tasks stay in each browser's `localStorage`, so tasks created on GitHub Pages do not appear there.
 
 ## Operations
 

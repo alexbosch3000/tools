@@ -1,0 +1,25 @@
+# Runs my-todo-list on a Docker host such as a Synology NAS (Container Manager).
+# Setup, update and rollback: docs/synology.md. Variables are read from .env, see .env.example.
+name: my-todo-list
+
+services:
+  my-todo-list:
+    image: ghcr.io/alexbosch3000/tools/my-todo-list:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    pids_limit: 100
+    # Keep the NAS volume from filling up: Docker does not rotate container logs by default.
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
