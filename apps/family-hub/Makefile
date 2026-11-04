@@ -16,7 +16,7 @@ SMOKE_PORT ?= 18080
 # Container hardening: read-only root filesystem, no capabilities, no privilege escalation. The
 # SQLite driver extracts its native library to /tmp and loads it from there, so /tmp allows exec;
 # /data holds the database (a volume in production).
-HARDENING := --read-only --tmpfs /tmp:exec --tmpfs /data --cap-drop ALL --security-opt no-new-privileges
+HARDENING := --read-only --tmpfs /tmp:exec --tmpfs /data:uid=10001,gid=10001 --cap-drop ALL --security-opt no-new-privileges
 
 .DEFAULT_GOAL := help
 .PHONY: help install lint test audit build pages api run dev-web observe image image-run smoke ci clean

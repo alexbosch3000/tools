@@ -23,7 +23,7 @@ services:
     read_only: true
     tmpfs:
       - /tmp:exec
-      - /data
+      - /data:uid=10001,gid=10001
     cap_drop:
       - ALL
     security_opt:
