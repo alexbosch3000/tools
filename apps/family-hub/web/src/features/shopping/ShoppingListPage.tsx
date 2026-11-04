@@ -13,6 +13,7 @@ import { AISLES, STORE_TYPES, UNITS } from '../../lib/labels.ts'
 import { ItemPicker } from '../../components/ItemPicker.tsx'
 import { Badge, Button, Card, Empty, ErrorMessage, Field, Loading, MemberDot, PageHeader, Select } from '../../components/ui.tsx'
 import { CompleteDialog } from './CompleteDialog.tsx'
+import { ListDialog } from './ListDialog.tsx'
 import { useOptimisticChecks } from './useOptimisticChecks.ts'
 
 type Row = Schemas['ShoppingRow']
@@ -127,6 +128,7 @@ export function ShoppingListPage() {
   const list = useQuery({ queryKey: key, queryFn: () => unwrap(api().GET('/api/shopping/lists/{id}', { params: { path: { id } } })) })
   const [store, setStore] = useState<Schemas['StoreType'] | null>(null)
   const [completing, setCompleting] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   const checks = useOptimisticChecks()
   const isChecked = (row: Row) => checks.isChecked(rowKey(row), row.checked)
@@ -157,6 +159,7 @@ export function ShoppingListPage() {
           : `Terminée ${formatDate(data.completedOn)} · payé ${formatMoney(data.amountPaidCents)}`}
         actions={(
           <>
+            {open && <Button onClick={() => setEditing(true)}>Modifier</Button>}
             <Button variant="danger" onClick={async () => {
               if (await confirm({ title: 'Supprimer la liste ?', message: `« ${data.name} » et ses articles seront supprimés.` })) removeList.mutate(undefined)
             }}>Supprimer</Button>
@@ -230,6 +233,7 @@ export function ShoppingListPage() {
           <Card title="Recettes possibles"><Suggestions rows={data.rows} /></Card>
         </div>
       </div>
+      {editing && <ListDialog list={data} onClose={() => setEditing(false)} />}
       {completing && <CompleteDialog list={data} onClose={() => setCompleting(false)} />}
     </>
   )

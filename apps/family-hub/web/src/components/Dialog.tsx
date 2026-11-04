@@ -30,9 +30,9 @@ export function Dialog({ title, onClose, children, footer, wide = false }: Props
     }
   }, [])
 
+  // Clicking the backdrop does not close the dialog so that a stray click never discards a form being filled in.
   return (
     <dialog ref={ref} aria-labelledby={titleId}
-      onClick={(event) => { if (event.target === ref.current) close.current() }}
       className={`m-auto w-[calc(100%-2rem)] ${wide ? 'max-w-2xl' : 'max-w-lg'} rounded-2xl border border-line bg-surface
         p-0 text-ink shadow-2xl`}>
       <header className="flex items-center justify-between border-b border-line px-5 py-4">

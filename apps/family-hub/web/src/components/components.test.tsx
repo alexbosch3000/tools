@@ -1,9 +1,10 @@
 // Behaviour of shared components: budget meter wording, member selection, toggles exposed to assistive technologies.
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import type { Schemas } from '../api/client.ts'
 import { Meter } from './charts.tsx'
+import { Dialog } from './Dialog.tsx'
 import { MemberPicker } from './ui.tsx'
 
 afterEach(cleanup)
@@ -38,5 +39,16 @@ describe('MemberPicker', () => {
     fireEvent.click(lea)
     expect(sam.getAttribute('aria-pressed')).toBe('true')
     expect(lea.getAttribute('aria-pressed')).toBe('false')
+  })
+})
+
+describe('Dialog', () => {
+  it('ignores a click on the backdrop but closes with the close button', () => {
+    const onClose = vi.fn()
+    const { container } = render(<Dialog title="Test" onClose={onClose}><p>Contenu</p></Dialog>)
+    fireEvent.click(container.querySelector('dialog')!)
+    expect(onClose).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Fermer', hidden: true }))
+    expect(onClose).toHaveBeenCalledTimes(1)
   })
 })
