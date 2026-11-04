@@ -1,5 +1,5 @@
 # CI/CD for apps/my-todo-list: verify and scan on every change, then publish the
-# image to GHCR and deploy to GitHub Pages from the default branch.
+# image to GHCR from the default branch.
 name: app-my-todo-list
 
 on:
@@ -10,14 +10,12 @@ on:
       - .github/workflows/app-my-todo-list.yml
       - .github/workflows/reusable-node.yml
       - .github/workflows/reusable-container.yml
-      - .github/workflows/reusable-pages.yml
   pull_request:
     paths:
       - apps/my-todo-list/**
       - .github/workflows/app-my-todo-list.yml
       - .github/workflows/reusable-node.yml
       - .github/workflows/reusable-container.yml
-      - .github/workflows/reusable-pages.yml
   workflow_dispatch:
 
 permissions:
@@ -32,7 +30,6 @@ jobs:
     uses: ./.github/workflows/reusable-node.yml
     with:
       app: my-todo-list
-      pages: true
 
   container:
     needs: verify
@@ -45,13 +42,3 @@ jobs:
     with:
       app: my-todo-list
       push: ${{ github.ref == 'refs/heads/main' }}
-
-  # GitHub Pages owner: move this job and `pages: true` to another app's workflow to hand Pages over.
-  pages:
-    if: github.ref == 'refs/heads/main'
-    needs: [verify, container]
-    uses: ./.github/workflows/reusable-pages.yml
-    permissions:
-      contents: read
-      pages: write
-      id-token: write

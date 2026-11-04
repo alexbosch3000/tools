@@ -22,7 +22,9 @@ services:
     pids_limit: 200
     environment:
       APP_TIME_ZONE: ${APP_TIME_ZONE:-Europe/Paris}
-      APP_COOKIE_SECURE: ${APP_COOKIE_SECURE:-false}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-}
+      # Attaches the OpenTelemetry agent when set (see the README for the other OTEL_* variables).
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
     volumes:
       - ${DATA_DIR:-/volume1/docker/family-hub/data}:/data
     # Keep the NAS volume from filling up: Docker does not rotate container logs by default.

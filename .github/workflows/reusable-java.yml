@@ -1,6 +1,8 @@
 # Reusable job: verifies a Java app through its Makefile (lint, test, audit, build).
 # The JDK comes from the app's .java-version so CI and developers use the same one. An app that
 # embeds a Node.js front end names its directory in `node-dir`, and Node.js comes from its .nvmrc.
+# With `pages: true`, on the default branch it also builds that front end alone for GitHub Pages
+# (`make pages`) and uploads <node-dir>/dist for reusable-pages.yml.
 name: reusable-java
 
 on:
@@ -15,6 +17,11 @@ on:
         required: false
         type: string
         default: ''
+      pages:
+        description: Build and upload the GitHub Pages artifact on the default branch (requires node-dir)
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -47,3 +54,12 @@ jobs:
           cache-dependency-path: apps/${{ inputs.app }}/${{ inputs.node-dir }}/package-lock.json
 
       - run: make ci
+
+      - name: Build for GitHub Pages
+        if: inputs.pages && github.ref_name == github.event.repository.default_branch
+        run: make pages BASE_PATH=/${{ github.event.repository.name }}/
+
+      - if: inputs.pages && github.ref_name == github.event.repository.default_branch
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: apps/${{ inputs.app }}/${{ inputs.node-dir }}/dist

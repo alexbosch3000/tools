@@ -94,12 +94,12 @@ Reference implementation: [`apps/family-hub`](../apps/family-hub).
 
 - Maven Wrapper (`mvnw`) committed, Java version pinned in `.java-version` and in `maven.compiler.release`.
 - `make test` runs `./mvnw -B verify`; `make audit` runs the OWASP `dependency-check-maven` plugin or an equivalent scanner.
-- Spring Boot Actuator: map `/healthz` and `/readyz` to the liveness and readiness groups, expose `prometheus` and `health` only.
+- Spring Boot Actuator: map `/healthz` and `/readyz` to the liveness and readiness groups, expose `health`, `prometheus` and `info` (build information) only.
 - Logs in JSON with `logging.structured.format.console=ecs` (Spring Boot 3.4+).
-- Traces through the OpenTelemetry Java agent, enabled by `JAVA_TOOL_OPTIONS=-javaagent:/otel/opentelemetry-javaagent.jar` and the `OTEL_*` variables.
+- Traces, logs and metrics through the OpenTelemetry Java agent, attached by the image entrypoint only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set and configured by the `OTEL_*` variables; business metrics registered with Micrometer are bridged to OTLP and also scraped on `/actuator/prometheus`.
 - Runtime image based on a JRE-only distroless or Temurin JRE image, non-root. The agent jar is copied next to the application jar (for example by `maven-dependency-plugin`) and excluded from it.
 - Add `java-kotlin` to the CodeQL matrix and a `maven` entry to `.github/dependabot.yml`.
-- An embedded user interface lives in `web/` with its own `package.json`, `.nvmrc` and the static web app tooling (Vite, Vitest, ESLint). Every `Makefile` target runs the npm step first, then Maven; Maven packages `web/dist` as static content, so one image serves both. The workflow passes `node-dir: web` to `reusable-java.yml`, and Dependabot covers `/apps/*/web`.
+- An embedded user interface lives in `web/` with its own `package.json`, `.nvmrc` and the static web app tooling (Vite, Vitest, ESLint). Every `Makefile` target runs the npm step first, then Maven; Maven packages `web/dist` as static content, so one image serves both. The workflow passes `node-dir: web` to `reusable-java.yml`, and Dependabot covers `/apps/*/web`. To be published on GitHub Pages as well, `make pages BASE_PATH=/sub/path/` builds the interface alone into `web/dist`, asking for the server address at first use; the service then lists the Pages origin in its CORS allowlist.
 - Persistence that must run without an external service in `make test`: SQLite on a mounted volume, migrated by Flyway, with `/tmp` mounted `exec` for the driver's native library.
 
 ### Java command-line tool (Maven)

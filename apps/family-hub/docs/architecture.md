@@ -29,16 +29,16 @@ money go" without the cost of real accounting.
 
 | Module | Responsibility | Main features |
 |---|---|---|
-| `family` | Members, authentication, roles | First-run setup, login, members with colour and role (`PARENT`, `CHILD`), calendar feed token |
-| `catalog` | Things that can be bought | Items of kind `GOODS` or `INGREDIENT`, store type, aisle, default unit, estimated unit price |
+| `family` | Members, authentication, roles | First-run setup, login with access tokens, members with colour, role (`PARENT`, `CHILD`) and clothing and shoe sizes, calendar feed token |
+| `catalog` | Things that can be bought | Items of kind `GOODS` or `INGREDIENT`, store type (supermarket, DIY, garden, clothing...), aisle, default unit, estimated unit price |
 | `recipes` | Cooking recipes | Ingredients (catalog items with quantity and unit), servings, scaling, suggestions from available items |
-| `shopping` | Shopping lists | Manual lines and recipe-derived lines, aggregation by item and unit, grouping by store and aisle, estimated cost, completion with amount paid |
+| `shopping` | Shopping lists | Manual lines and recipe-derived lines, lines bought for a member (clothes, shoes), aggregation by item, member and unit, grouping by store and aisle, estimated cost, completion with the amount paid per store type |
 | `planning` | Time-boxed family activities | Entries at minute precision, typed (`EVENT`, `SHOPPING`, `MEAL`, `ACCOUNTING`), categories (holidays, day camp, taxes, sport...), recurrence with exceptions, attendees, estimated cost, French public holidays, iCalendar feed |
 | `todo` | Unscheduled or loosely scheduled work | Lists, items with assignee, priority, optional due time, repetition |
 | `accounting` | Family budget | Accounts, categories with envelopes, transactions (`PLANNED` or `PENDING`, then `APPROVED`), recurring transactions, monthly and yearly reports |
 | `dashboard` | Read-only aggregation | Agenda, load per member, overdue to-dos, open lists, budget consumption, approvals to do |
 | `admin` | Operations | Consistent database backup download |
-| `shared` | Cross-cutting kernel | Errors, money, clock, SQL helpers |
+| `shared` | Cross-cutting kernel | Errors, money, clock, SQL helpers, telemetry, web and OpenAPI configuration |
 
 ### Planning entry types
 
@@ -58,13 +58,14 @@ Event categories: `VACATION`, `DAY_CAMP` (centre aéré), `TAXES`, `SPORT`, `HEA
 ## 3. Architecture
 
 A **modular monolith**: one Spring Boot process, one SQLite database, one container image that also
-serves the React user interface. Modules are Java packages whose boundaries are verified by a test
+serves the user interface. The same interface is published on GitHub Pages and calls the service
+across origins. Modules are Java packages whose boundaries are verified by a test
 (Spring Modulith): a module only uses the public types at the root of another module's package,
 never its `internal` sub-package, and dependencies have no cycle.
 
 ```mermaid
 flowchart TB
-    UI[React SPA<br>served by the same process] -->|JSON /api| WEB
+    UI[TypeScript SPA<br>served by the service or by GitHub Pages] -->|JSON /api, Bearer token| WEB
 
     subgraph WEB[family-hub service]
         direction TB
@@ -81,6 +82,7 @@ flowchart TB
     end
 
     WEB --> DB[(SQLite<br>/data/family-hub.db)]
+    WEB -. OTLP traces, logs, metrics .-> OTEL[OpenTelemetry collector]
 ```
 
 Solid arrows are method calls on a module's public API; dotted arrows are domain events.
@@ -95,7 +97,7 @@ Every module also depends on `shared`.
 | planning → recipes → shopping | Call | "Prepare the shopping for the week": every `MEAL` entry in a date range adds its recipe, scaled to its servings, to a list. |
 | recipes → shopping | Call (from shopping) | Adding a recipe to a list adds its ingredients, scaled, as lines tied to that recipe entry. Removing the recipe removes them. |
 | shopping → recipes | Query | Recipes ranked by the share of their ingredients present in a list (the UI sends the list's item ids to `recipes`). |
-| shopping → accounting | Event `ShoppingListCompleted` | Completing a list with the amount paid creates a `PENDING` expense, categorised from the list's main store type, to be approved by a parent. |
+| shopping → accounting | Event `ShoppingListCompleted` | Completing a list with the amount paid in each kind of shop creates one `PENDING` expense per payment, categorised from its store type (groceries, DIY, garden, clothing...), to be approved by a parent. |
 | shopping → planning | Event `ShoppingListCompleted` | `SHOPPING` entries linked to the list are marked done. |
 | planning → accounting | UI link | `ACCOUNTING` entries open the month report or the approval queue. |
 | todo, planning → dashboard | Query | Load per member over the coming week. |
@@ -121,9 +123,9 @@ sequenceDiagram
     PL->>SH: create list, add recipe x servings (per meal)
     SH->>RE: scaled ingredients
     SH-->>P: list grouped by store and aisle, estimated cost
-    P->>SH: complete list, 87.40 EUR paid
-    SH-)AC: ShoppingListCompleted
-    AC->>AC: PENDING expense "courses"
+    P->>SH: complete list, 87.40 EUR at the supermarket, 39.99 EUR for clothes
+    SH-)AC: ShoppingListCompleted (one payment per store type)
+    AC->>AC: PENDING expenses "courses" and "vetements"
     SH-)PL: ShoppingListCompleted
     PL->>PL: linked SHOPPING entry done
     P->>AC: approve
@@ -183,8 +185,12 @@ erDiagram
 | Data access | `JdbcClient` with explicit SQL | JPA: SQLite only has a community dialect, and lazy loading hides queries. Spring Data JDBC: needs a custom SQLite dialect. |
 | Concurrency | One pooled connection | SQLite serialises writers anyway; one connection removes `SQLITE_BUSY` errors. Ample for a family. |
 | Module boundaries | Packages + Spring Modulith verification test | Maven modules: more ceremony, same guarantee |
-| Authentication | Session cookie, BCrypt passwords, CSRF token for the SPA | Reverse-proxy authentication: depends on the host; HTTP Basic: no logout, weak UX |
-| Front end | React 19, Vite, Tailwind CSS 3, hash routing | Same stack as `my-todo-list`; hash routing avoids server-side route fallback |
+| Authentication | Opaque Bearer tokens (random, stored as SHA-256 hashes, 30 days sliding validity), BCrypt passwords, login throttling | Session cookie: blocked as a third-party cookie when the UI is served by GitHub Pages (Safari, Firefox), and needs CSRF protection. JWT: cannot be revoked without a server-side list, so no simpler. Reverse-proxy authentication: depends on the host. |
+| Hosting of the UI | Embedded in the jar, and published on GitHub Pages (`make pages`), which asks for the server address | Pages alone: the NAS would still have to serve the API, and the embedded UI keeps working without internet access |
+| Front end | TypeScript (strict), React 19, TanStack Query (server state, cache, invalidation) and TanStack Router (typed routes, hash history), Vite, Tailwind CSS 4 with design tokens and dark mode | JavaScript like `my-todo-list`: no compile-time check against the API. Redux or hand-written fetch state: more code for caching and refresh. Hash history works on Pages without a 404 fallback. |
+| API contract | OpenAPI 3.1 generated by springdoc, committed (`web/src/api/openapi.json`) and checked by a test; TypeScript types generated from it (`openapi-typescript`, `openapi-fetch`) | Hand-written client types: drift silently from the server |
+| Null-safety | JSpecify `@NullMarked` packages, `@Nullable` where absent values are legal; reflected in the contract as required or nullable fields | Optional fields everywhere: every client has to guess |
+| Observability | OpenTelemetry Java agent, attached only when an OTLP endpoint is set; business metrics with Micrometer (bridged to OTLP and scraped by Prometheus); `@WithSpan` on business operations; ECS logs with trace ids | Micrometer tracing with the OTLP exporter: fewer automatic instrumentations (JDBC, logs), more code. Spring Boot OTLP starters: same signals, but the agent keeps the jar free of telemetry code. |
 | Charts | Hand-written SVG and CSS | No chart library needed for bars and gauges |
 
 ## 6. Security
@@ -197,13 +203,19 @@ erDiagram
 
 - The first visit creates the first parent (`/api/setup`), only while no member exists. Do the
   setup before exposing the service.
-- Passwords are hashed with BCrypt; sessions are server-side, the cookie is `HttpOnly` and
-  `SameSite=Lax`, and `Secure` behind HTTPS (`APP_COOKIE_SECURE=true`).
-- State-changing requests require the CSRF token (cookie `XSRF-TOKEN`, header `X-XSRF-TOKEN`).
+- Passwords are hashed with BCrypt. Login returns a random token sent as `Authorization: Bearer`;
+  only its SHA-256 hash is stored. It expires after 30 days without use; logging out revokes it,
+  changing a password revokes every token of the member.
+- Five failed logins for a username within 15 minutes block it for the rest of the window (`429`
+  with `Retry-After`), which slows password guessing without locking the family out for long.
+- No cookie is used, so no CSRF protection is needed: a token in a header is never sent by the
+  browser on its own. Cross-origin calls are limited to `APP_ALLOWED_ORIGINS` (CORS); the token is
+  kept in `localStorage`, which the Content Security Policy protects by forbidding foreign scripts.
 - The calendar feed is authenticated by a random per-member token in its URL, stored hashed and
   revocable by generating a new one.
 - Security headers: Content Security Policy without inline scripts, `nosniff`, frame denial,
-  referrer policy.
+  referrer policy. The Pages build carries its own policy in a `<meta>` tag, allowing API calls to
+  HTTPS origins only.
 - All input is validated (Bean Validation on requests, domain invariants in the services); all SQL
   uses bound parameters.
 
@@ -212,10 +224,11 @@ erDiagram
 | Concern | Implementation |
 |---|---|
 | Port | `8080`, UI at `/`, API under `/api` |
-| Health | `/healthz` (liveness), `/readyz` (readiness, includes the database) |
-| Metrics | `/actuator/prometheus` |
-| Traces | OpenTelemetry Java agent shipped in the image, enabled through `JAVA_TOOL_OPTIONS` and `OTEL_*` |
-| Logs | ECS JSON on stdout |
+| Health | `/healthz` (liveness), `/readyz` (readiness: database and free disk space) |
+| Metrics | `/actuator/prometheus`, and OTLP when an endpoint is set; business metrics under `familyhub.*` |
+| Traces | OpenTelemetry Java agent shipped in the image, attached by the entrypoint when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; `service.version` is the image tag |
+| Logs | ECS JSON on stdout with trace ids; also exported over OTLP with their key-value attributes |
+| Dashboards and alerts | `observability/`: Grafana dashboard and Prometheus alert rules, run locally with `make observe` |
 | Data | `APP_DATA_DIR/family-hub.db`, a mounted volume; `/tmp` must allow `exec` for the SQLite native library |
 | Backup | `GET /api/admin/backup` returns a consistent copy (`VACUUM INTO`) while the service runs; a file copy of `DATA_DIR` needs the service stopped |
 | Shutdown | Graceful, 30 seconds |
@@ -226,8 +239,9 @@ erDiagram
 |---|---|---|
 | Domain | Recurrence expansion, unit conversion and aggregation, recipe scaling, budget report, recurring schedules, public holidays, iCalendar output | Plain JUnit, fixed dates |
 | Module boundaries | No cycles, no access to `internal` packages | `ApplicationModules.verify()` |
-| Flows | Setup and login, roles, meal plan to shopping list, list completion to accounting, planning cost to planned expense, approval | `@SpringBootTest` + MockMvc on a temporary SQLite file, fixed clock |
-| UI logic | Calendar layout, grouping, formatting | Vitest |
+| Flows | Setup, login, tokens and throttling, roles, CORS, meal plan to shopping list, clothing split payments to accounting, planning cost to planned expense, approval, business metrics | `@SpringBootTest` + MockMvc on a temporary SQLite file, fixed clock |
+| API contract | The committed OpenAPI document matches the server | `OpenApiContractTest`; `make api` rewrites it |
+| UI logic | Calendar layout, grouping, formatting, API client, session, optimistic ticks | Vitest, Testing Library on jsdom |
 
 ## 9. Roadmap
 

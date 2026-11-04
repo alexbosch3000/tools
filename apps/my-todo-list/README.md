@@ -7,7 +7,6 @@ Personal task manager with list and calendar views. Static single-page applicati
 | Stack | Node.js 26, React 18, Vite, Tailwind CSS 3, Vitest, ESLint |
 | Runtime | NGINX (unprivileged) serving static files on port `8080` |
 | Image | `ghcr.io/alexbosch3000/tools/my-todo-list` |
-| Live | https://alexbosch3000.github.io/tools/ |
 | CI/CD | [`.github/workflows/app-my-todo-list.yml`](../../.github/workflows/app-my-todo-list.yml) |
 
 ## Usage
@@ -25,13 +24,13 @@ make smoke       # start the hardened image and check /healthz
 
 | Variable | Scope | Default | Description |
 |---|---|---|---|
-| `BASE_PATH` | build time (`make build BASE_PATH=/tools/`) | `/` | Public path the app is served from. Set by CI for GitHub Pages. |
+| `BASE_PATH` | build time (`make build BASE_PATH=/tools/`) | `/` | Public path the app is served from, for a deployment under a sub-path. |
 | `IMAGE_TAG` | `docker-compose.yml` | `latest` | Image tag to run; use a `sha-<commit>` tag to pin a version. |
 | `HOST_PORT` | `docker-compose.yml` | `8080` | Port published on the Docker host. |
 
 ## Deploy on a Synology NAS
 
-[`docker-compose.yml`](docker-compose.yml) runs the published image with the same hardening as `make image-run` (read-only filesystem, no capabilities, log rotation). Copy it with [`.env.example`](.env.example) renamed to `.env` to the NAS and follow [docs/synology.md](../../docs/synology.md). The app then answers on `http://<nas>:8080`. Tasks stay in each browser's `localStorage`, so tasks created on GitHub Pages do not appear there.
+[`docker-compose.yml`](docker-compose.yml) runs the published image with the same hardening as `make image-run` (read-only filesystem, no capabilities, log rotation). Copy it with [`.env.example`](.env.example) renamed to `.env` to the NAS and follow [docs/synology.md](../../docs/synology.md). The app then answers on `http://<nas>:8080`. Tasks stay in each browser's `localStorage`: they are not shared between browsers, and tasks created when the app was on GitHub Pages do not appear there.
 
 ## Operations
 
