@@ -12,23 +12,22 @@ import java.util.Map;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockHttpSession;
 
 class CrossModuleFlowsTest extends IntegrationTest {
 
-    private long recipeId(MockHttpSession session, String name) throws Exception {
-        List<Number> ids = read(getJson(session, "/api/recipes?q={q}", name), "$[?(@.name == '" + name + "')].id");
+    private long recipeId(String token, String name) throws Exception {
+        List<Number> ids = read(getJson(token, "/api/recipes?q={q}", name), "$[?(@.name == '" + name + "')].id");
         return ids.getFirst().longValue();
     }
 
-    private long itemId(MockHttpSession session, String name) throws Exception {
-        List<Number> ids = read(getJson(session, "/api/items?q={q}", name), "$[?(@.name == '" + name + "')].id");
+    private long itemId(String token, String name) throws Exception {
+        List<Number> ids = read(getJson(token, "/api/items?q={q}", name), "$[?(@.name == '" + name + "')].id");
         return ids.getFirst().longValue();
     }
 
     @Test
     void plannedMealsBecomeAScaledShoppingList() throws Exception {
-        MockHttpSession parent = parentSession();
+        String parent = parentToken();
         long carbonara = recipeId(parent, "Pâtes carbonara");
         long crepes = recipeId(parent, "Crêpes");
         postJson(parent, "/api/planning/entries", """
@@ -61,7 +60,7 @@ class CrossModuleFlowsTest extends IntegrationTest {
 
     @Test
     void completingAShoppingListRecordsAnExpenseToApproveAndClosesItsPlanningEntry() throws Exception {
-        MockHttpSession parent = parentSession();
+        String parent = parentToken();
         long entryId = id(postJson(parent, "/api/planning/entries", """
                 {"title":"Courses du samedi","type":"SHOPPING","start":"2026-11-07T10:00","end":"2026-11-07T11:00",
                  "createShoppingList":true}""").andExpect(status().isCreated()));
@@ -73,12 +72,14 @@ class CrossModuleFlowsTest extends IntegrationTest {
         putJson(parent, "/api/shopping/lists/" + listId + "/items/" + itemId(parent, "Lait") + "/checked",
                 "{\"checked\":true}").andExpect(jsonPath("$.checkedCount").value(1));
         postJson(parent, "/api/shopping/lists/" + listId + "/complete", """
-                {"amountPaidCents":8740,"paidOn":"2026-11-07"}""")
-                .andExpect(jsonPath("$.status").value("DONE"));
+                {"payments":[{"storeType":"SUPERMARKET","amountCents":8740}],"paidOn":"2026-11-07"}""")
+                .andExpect(jsonPath("$.status").value("DONE"))
+                .andExpect(jsonPath("$.amountPaidCents").value(8740));
 
         getJson(parent, "/api/planning/entries/{id}", entryId).andExpect(jsonPath("$.done").value(true));
         String approvals = getJson(parent, "/api/accounting/approvals").andReturn().getResponse().getContentAsString();
-        List<Map<String, Object>> fromShopping = JsonPath.read(approvals, "$[?(@.sourceType == 'SHOPPING')]");
+        List<Map<String, Object>> fromShopping = JsonPath.read(approvals,
+                "$[?(@.sourceRef == 'list-" + listId + "-SUPERMARKET')]");
         assertThat(fromShopping).hasSize(1);
         assertThat(fromShopping.getFirst()).containsEntry("amountCents", 8740).containsEntry("categoryCode", "courses")
                 .containsEntry("status", "PENDING");
@@ -97,7 +98,7 @@ class CrossModuleFlowsTest extends IntegrationTest {
 
     @Test
     void anEventCostIsPlannedInTheBudgetAndFollowsTheEntry() throws Exception {
-        MockHttpSession parent = parentSession();
+        String parent = parentToken();
         String vacation = """
                 {"title":"Vacances au ski","type":"EVENT","category":"VACATION","allDay":true,
                  "start":"2027-02-13T00:00","end":"2027-02-20T00:00","estimatedCostCents":%d}""";
@@ -120,7 +121,7 @@ class CrossModuleFlowsTest extends IntegrationTest {
 
     @Test
     void recurringBillsArePlannedForTheCurrentAndNextMonth() throws Exception {
-        MockHttpSession parent = parentSession();
+        String parent = parentToken();
         postJson(parent, "/api/accounting/recurring", """
                 {"label":"Électricité","categoryCode":"energie","supplier":"EDF","amountCents":9500,
                  "period":"MONTHLY","dayOfMonth":10,"startDate":"2026-01-10","active":true}""")
@@ -138,7 +139,7 @@ class CrossModuleFlowsTest extends IntegrationTest {
 
     @Test
     void recurringEntriesExpandAndCanSkipAnOccurrence() throws Exception {
-        MockHttpSession parent = parentSession();
+        String parent = parentToken();
         long me = ((Number) read(getJson(parent, "/api/session"), "$.member.id")).longValue();
         long judo = id(postJson(parent, "/api/planning/entries", """
                 {"title":"Judo","type":"EVENT","category":"SPORT","start":"2026-11-04T17:00","end":"2026-11-04T18:00",
@@ -157,7 +158,7 @@ class CrossModuleFlowsTest extends IntegrationTest {
 
     @Test
     void validatesTypeSpecificFields() throws Exception {
-        MockHttpSession parent = parentSession();
+        String parent = parentToken();
         postJson(parent, "/api/planning/entries", """
                 {"title":"Repas","type":"MEAL","start":"2026-11-04T19:00","end":"2026-11-04T20:00"}""")
                 .andExpect(status().isBadRequest())
@@ -172,7 +173,7 @@ class CrossModuleFlowsTest extends IntegrationTest {
 
     @Test
     void suggestsRecipesFromTheItemsOfAList() throws Exception {
-        MockHttpSession parent = parentSession();
+        String parent = parentToken();
         String ids = itemId(parent, "Farine") + "," + itemId(parent, "Œufs") + "," + itemId(parent, "Lait");
         getJson(parent, "/api/recipes/suggestions?itemIds=" + ids)
                 .andExpect(jsonPath("$[0].name").value("Crêpes"))
@@ -181,7 +182,7 @@ class CrossModuleFlowsTest extends IntegrationTest {
 
     @Test
     void repeatingTodoCreatesItsNextOccurrenceWhenDone() throws Exception {
-        MockHttpSession child = childSession();
+        String child = childToken();
         long listId = ((Number) ((List<?>) read(getJson(child, "/api/todo/lists"), "$[?(@.name == 'Maison')].id"))
                 .getFirst()).longValue();
         long itemId = id(postJson(child, "/api/todo/items", """
@@ -198,7 +199,7 @@ class CrossModuleFlowsTest extends IntegrationTest {
 
     @Test
     void calendarFeedIsReachableWithItsTokenOnly() throws Exception {
-        MockHttpSession parent = parentSession();
+        String parent = parentToken();
         postJson(parent, "/api/planning/entries", """
                 {"title":"Dentiste","type":"EVENT","category":"HEALTH",
                  "start":"2026-11-05T09:15","end":"2026-11-05T09:45"}""");
@@ -215,10 +216,52 @@ class CrossModuleFlowsTest extends IntegrationTest {
     }
 
     @Test
+    void clothesAreBoughtPerMemberAndRecordedAsClothingExpenses() throws Exception {
+        String parent = parentToken();
+        childToken();
+        long sam = ((Number) ((List<?>) read(getJson(parent, "/api/members"), "$[?(@.username == 'sam')].id"))
+                .getFirst()).longValue();
+        long me = ((Number) read(getJson(parent, "/api/session"), "$.member.id")).longValue();
+        long listId = id(postJson(parent, "/api/shopping/lists", "{\"name\":\"Rentrée\"}"));
+        String lines = "/api/shopping/lists/" + listId + "/lines";
+        long shoes = itemId(parent, "Chaussures");
+        postJson(parent, lines, "{\"itemId\":%d,\"memberId\":%d,\"quantity\":1,\"unit\":\"PIECE\"}"
+                .formatted(shoes, sam));
+        postJson(parent, lines, "{\"itemId\":%d,\"memberId\":%d,\"quantity\":1,\"unit\":\"PIECE\"}"
+                .formatted(shoes, me));
+        postJson(parent, lines, "{\"itemId\":%d,\"quantity\":1,\"unit\":\"L\"}".formatted(itemId(parent, "Lait")))
+                .andExpect(jsonPath("$.rows[?(@.name == 'Chaussures')].memberId", Matchers.containsInAnyOrder(
+                        (int) sam, (int) me)))
+                .andExpect(jsonPath("$.rows[?(@.name == 'Chaussures')].storeType", Matchers.everyItem(
+                        Matchers.is("CLOTHING"))));
+
+        putJson(parent, "/api/shopping/lists/" + listId + "/items/" + shoes + "/checked?memberId=" + sam,
+                "{\"checked\":true}").andExpect(jsonPath("$.checkedCount").value(1));
+        postJson(parent, "/api/shopping/lists/" + listId + "/complete", """
+                {"payments":[{"storeType":"CLOTHING","amountCents":9000},{"storeType":"SUPERMARKET","amountCents":220}],
+                 "paidOn":"2026-11-03"}""")
+                .andExpect(jsonPath("$.amountPaidCents").value(9220));
+
+        String approvals = getJson(parent, "/api/accounting/approvals").andReturn().getResponse().getContentAsString();
+        assertThat(JsonPath.<List<Integer>>read(approvals,
+                "$[?(@.sourceRef == 'list-" + listId + "-CLOTHING')].amountCents")).containsExactly(9000);
+        assertThat(JsonPath.<List<String>>read(approvals,
+                "$[?(@.sourceRef == 'list-" + listId + "-CLOTHING')].categoryCode")).containsExactly("vetements");
+        assertThat(JsonPath.<List<String>>read(approvals,
+                "$[?(@.sourceRef == 'list-" + listId + "-SUPERMARKET')].categoryCode")).containsExactly("courses");
+
+        String metrics = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .get("/actuator/prometheus")).andReturn().getResponse().getContentAsString();
+        assertThat(metrics).contains("familyhub_shopping_trips_total")
+                .containsPattern("familyhub_shopping_spent_euros_count\\{[^}]*store_type=\"CLOTHING\"")
+                .contains("familyhub_accounting_approvals_pending");
+    }
+
+    @Test
     void parentsCanDownloadAConsistentBackup() throws Exception {
-        byte[] backup = getJson(parentSession(), "/api/admin/backup").andExpect(status().isOk())
+        byte[] backup = getJson(parentToken(), "/api/admin/backup").andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsByteArray();
         assertThat(new String(backup, 0, 15, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("SQLite format 3");
-        getJson(childSession(), "/api/admin/backup").andExpect(status().isForbidden());
+        getJson(childToken(), "/api/admin/backup").andExpect(status().isForbidden());
     }
 }

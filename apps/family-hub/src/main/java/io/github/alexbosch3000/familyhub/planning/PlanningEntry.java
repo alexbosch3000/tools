@@ -4,6 +4,7 @@ package io.github.alexbosch3000.familyhub.planning;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Date-times are local to the family's time zone. Fields of other types than {@code type} are null.
@@ -18,8 +19,9 @@ import java.util.List;
  * @param servings           MEAL only
  * @param accountingAction   ACCOUNTING only
  */
-public record PlanningEntry(long id, String title, String description, String location, EntryType type,
-        LocalDateTime start, LocalDateTime end, boolean allDay, Recurrence recurrence, List<LocalDate> exceptions,
-        List<Long> memberIds, EventCategory category, Long estimatedCostCents, Long shoppingListId, Long recipeId,
-        Integer servings, AccountingAction accountingAction, boolean done) {
+public record PlanningEntry(long id, String title, String description, @Nullable String location, EntryType type,
+        LocalDateTime start, LocalDateTime end, boolean allDay, @Nullable Recurrence recurrence,
+        List<LocalDate> exceptions, List<Long> memberIds, @Nullable EventCategory category,
+        @Nullable Long estimatedCostCents, @Nullable Long shoppingListId, @Nullable Long recipeId,
+        @Nullable Integer servings, @Nullable AccountingAction accountingAction, boolean done) {
 }

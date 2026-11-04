@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 public record Quantity(double amount, Unit unit) {
 
@@ -19,7 +20,7 @@ public record Quantity(double amount, Unit unit) {
     }
 
     /** Converts to another unit of the same dimension, or returns null when the dimensions differ. */
-    public Double in(Unit target) {
+    public @Nullable Double in(Unit target) {
         if (target.dimension() != unit.dimension()) {
             return null;
         }

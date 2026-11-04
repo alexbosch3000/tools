@@ -6,13 +6,14 @@ import io.github.alexbosch3000.familyhub.todo.Repeat;
 import io.github.alexbosch3000.familyhub.todo.TodoItem;
 import io.github.alexbosch3000.familyhub.todo.TodoList;
 import io.github.alexbosch3000.familyhub.todo.TodoService;
-import io.github.alexbosch3000.familyhub.todo.TodoService.ItemData;
+import io.github.alexbosch3000.familyhub.todo.TodoService.TodoItemData;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,18 +36,19 @@ class TodoController {
         this.todos = todos;
     }
 
-    record ListRequest(@NotBlank @Size(max = 60) String name) {
+    record TodoListRequest(@NotBlank @Size(max = 60) String name) {
     }
 
-    record ItemRequest(@NotNull Long listId, @NotBlank @Size(max = 200) String title, @Size(max = 4000) String notes,
-            Long assigneeId, LocalDateTime dueAt, Priority priority, Repeat repeat) {
+    record TodoItemRequest(@NotNull Long listId, @NotBlank @Size(max = 200) String title,
+            @Nullable @Size(max = 4000) String notes, @Nullable Long assigneeId, @Nullable LocalDateTime dueAt,
+            @Nullable Priority priority, @Nullable Repeat repeat) {
 
-        ItemData toData() {
-            return new ItemData(listId, title, notes, assigneeId, dueAt, priority, repeat);
+        TodoItemData toData() {
+            return new TodoItemData(listId, title, notes, assigneeId, dueAt, priority, repeat);
         }
     }
 
-    record DoneRequest(boolean done) {
+    record TodoDoneRequest(boolean done) {
     }
 
     @GetMapping("/lists")
@@ -56,12 +58,12 @@ class TodoController {
 
     @PostMapping("/lists")
     @ResponseStatus(HttpStatus.CREATED)
-    TodoList createList(@Valid @RequestBody ListRequest request) {
+    TodoList createList(@Valid @RequestBody TodoListRequest request) {
         return todos.createList(request.name());
     }
 
     @PutMapping("/lists/{id}")
-    TodoList renameList(@PathVariable long id, @Valid @RequestBody ListRequest request) {
+    TodoList renameList(@PathVariable long id, @Valid @RequestBody TodoListRequest request) {
         return todos.renameList(id, request.name());
     }
 
@@ -72,24 +74,25 @@ class TodoController {
     }
 
     @GetMapping("/items")
-    List<TodoItem> items(@RequestParam(required = false) Long listId, @RequestParam(required = false) Long assigneeId,
+    List<TodoItem> items(@RequestParam(required = false) @Nullable Long listId,
+            @RequestParam(required = false) @Nullable Long assigneeId,
             @RequestParam(defaultValue = "false") boolean includeDone) {
         return todos.items(listId, assigneeId, includeDone);
     }
 
     @PostMapping("/items")
     @ResponseStatus(HttpStatus.CREATED)
-    TodoItem create(@Valid @RequestBody ItemRequest request) {
+    TodoItem create(@Valid @RequestBody TodoItemRequest request) {
         return todos.create(request.toData());
     }
 
     @PutMapping("/items/{id}")
-    TodoItem update(@PathVariable long id, @Valid @RequestBody ItemRequest request) {
+    TodoItem update(@PathVariable long id, @Valid @RequestBody TodoItemRequest request) {
         return todos.update(id, request.toData());
     }
 
     @PutMapping("/items/{id}/done")
-    TodoItem done(@PathVariable long id, @RequestBody DoneRequest request) {
+    TodoItem done(@PathVariable long id, @RequestBody TodoDoneRequest request) {
         return todos.setDone(id, request.done());
     }
 

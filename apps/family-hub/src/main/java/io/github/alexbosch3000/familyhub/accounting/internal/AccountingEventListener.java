@@ -10,6 +10,7 @@ import io.github.alexbosch3000.familyhub.accounting.internal.AccountingRepositor
 import io.github.alexbosch3000.familyhub.planning.PlannedExpenseCancelled;
 import io.github.alexbosch3000.familyhub.planning.PlannedExpenseChanged;
 import io.github.alexbosch3000.familyhub.shopping.ShoppingListCompleted;
+import io.github.alexbosch3000.familyhub.shopping.ShoppingPayment;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -52,17 +53,20 @@ class AccountingEventListener {
         repository.deletePlanned(SourceType.PLANNING, planningRef(event.entryId()));
     }
 
+    /** One pending expense per kind of shop, so that clothes and groceries land in their own categories. */
     @EventListener
     void on(ShoppingListCompleted event) {
-        String ref = "list-" + event.listId();
-        if (repository.findBySource(SourceType.SHOPPING, ref).isPresent()) {
-            return;
-        }
         Long account = event.accountId() != null && repository.findAccounts().stream()
                 .anyMatch(a -> a.id() == event.accountId()) ? event.accountId() : null;
-        repository.insertTransaction(new TransactionRow(event.paidOn(), event.name(), event.amountCents(),
-                expenseCategory(CategoryMapping.forStore(event.mainStoreType())), account, TransactionStatus.PENDING,
-                SourceType.SHOPPING, ref, null, null), LocalDateTime.now(clock));
+        for (ShoppingPayment payment : event.payments()) {
+            String ref = "list-" + event.listId() + "-" + payment.storeType().name();
+            if (payment.amountCents() == 0 || repository.findBySource(SourceType.SHOPPING, ref).isPresent()) {
+                continue;
+            }
+            repository.insertTransaction(new TransactionRow(event.paidOn(), event.name(), payment.amountCents(),
+                    expenseCategory(CategoryMapping.forStore(payment.storeType())), account,
+                    TransactionStatus.PENDING, SourceType.SHOPPING, ref, null, null), LocalDateTime.now(clock));
+        }
     }
 
     /** The mapped category if the family kept it, else the fallback, else the first expense category. */

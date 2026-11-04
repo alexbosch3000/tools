@@ -6,12 +6,13 @@ import io.github.alexbosch3000.familyhub.todo.Priority;
 import io.github.alexbosch3000.familyhub.todo.Repeat;
 import io.github.alexbosch3000.familyhub.todo.TodoItem;
 import io.github.alexbosch3000.familyhub.todo.TodoList;
-import io.github.alexbosch3000.familyhub.todo.TodoService.ItemData;
+import io.github.alexbosch3000.familyhub.todo.TodoService.TodoItemData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -34,7 +35,7 @@ public class TodoRepository {
                 .list();
     }
 
-    public boolean listNameTaken(String name, Long exceptId) {
+    public boolean listNameTaken(String name, @Nullable Long exceptId) {
         return jdbc.sql("SELECT COUNT(*) FROM todo_list WHERE name = ? AND id IS NOT ?").params(name, exceptId)
                 .query(Long.class).single() > 0;
     }
@@ -42,7 +43,7 @@ public class TodoRepository {
     public long insertList(String name, LocalDateTime now) {
         KeyHolder keys = new GeneratedKeyHolder();
         jdbc.sql("INSERT INTO todo_list (name, created_at) VALUES (?, ?)").params(name, Db.text(now)).update(keys);
-        return keys.getKey().longValue();
+        return Db.key(keys);
     }
 
     public void renameList(long id, String name) {
@@ -53,7 +54,7 @@ public class TodoRepository {
         jdbc.sql("DELETE FROM todo_list WHERE id = ?").param(id).update();
     }
 
-    public List<TodoItem> findItems(Long listId, Long assigneeId, boolean includeDone) {
+    public List<TodoItem> findItems(@Nullable Long listId, @Nullable Long assigneeId, boolean includeDone) {
         return jdbc.sql("""
                 SELECT * FROM todo_item
                 WHERE (:listId IS NULL OR list_id = :listId)
@@ -69,7 +70,7 @@ public class TodoRepository {
         return jdbc.sql("SELECT * FROM todo_item WHERE id = ?").param(id).query(TodoRepository::map).optional();
     }
 
-    public long insertItem(ItemData data, LocalDateTime now) {
+    public long insertItem(TodoItemData data, LocalDateTime now) {
         KeyHolder keys = new GeneratedKeyHolder();
         jdbc.sql("""
                 INSERT INTO todo_item (list_id, title, notes, assignee_id, due_at, priority, repeat, created_at)
@@ -77,10 +78,10 @@ public class TodoRepository {
                 .params(data.listId(), data.title(), data.notes(), data.assigneeId(), Db.text(data.dueAt()),
                         data.priority().name(), Db.text(data.repeat()), Db.text(now))
                 .update(keys);
-        return keys.getKey().longValue();
+        return Db.key(keys);
     }
 
-    public void updateItem(long id, ItemData data) {
+    public void updateItem(long id, TodoItemData data) {
         jdbc.sql("""
                 UPDATE todo_item SET list_id = ?, title = ?, notes = ?, assignee_id = ?, due_at = ?, priority = ?,
                                      repeat = ?
@@ -90,7 +91,7 @@ public class TodoRepository {
                 .update();
     }
 
-    public void setDone(long id, boolean done, LocalDateTime doneAt) {
+    public void setDone(long id, boolean done, @Nullable LocalDateTime doneAt) {
         jdbc.sql("UPDATE todo_item SET done = ?, done_at = ? WHERE id = ?").params(done, Db.text(doneAt), id).update();
     }
 

@@ -1,0 +1,9 @@
+# Grafana provider loading the family-hub dashboard into the otel-lgtm image.
+apiVersion: 1
+providers:
+  - name: family-hub
+    type: file
+    disableDeletion: true
+    options:
+      path: /otel-lgtm/grafana/conf/provisioning/dashboards/custom
+      foldersFromFilesStructure: false

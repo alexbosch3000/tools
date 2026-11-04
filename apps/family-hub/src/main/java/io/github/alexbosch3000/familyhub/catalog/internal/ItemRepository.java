@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -32,7 +33,7 @@ public class ItemRepository {
         this.jdbc = jdbc;
     }
 
-    public List<Item> find(ItemKind kind, String query) {
+    public List<Item> find(@Nullable ItemKind kind, @Nullable String query) {
         String like = query == null || query.isBlank() ? null : "%" + query.trim() + "%";
         return jdbc.sql(SELECT + " " + """
                  WHERE (:kind IS NULL OR kind = :kind) AND (:like IS NULL OR name LIKE :like)
@@ -53,7 +54,7 @@ public class ItemRepository {
                 .stream().collect(Collectors.toMap(Item::id, Function.identity()));
     }
 
-    public boolean nameTaken(String name, Long exceptId) {
+    public boolean nameTaken(String name, @Nullable Long exceptId) {
         return jdbc.sql("SELECT COUNT(*) FROM item WHERE name = ? AND id IS NOT ?").params(name, exceptId)
                 .query(Long.class).single() > 0;
     }
@@ -66,7 +67,7 @@ public class ItemRepository {
                 .params(data.name().trim(), data.kind().name(), data.storeType().name(), data.aisle().name(),
                         data.unit().name(), data.unitPriceCents())
                 .update(keys);
-        return keys.getKey().longValue();
+        return Db.key(keys);
     }
 
     public void update(long id, ItemData data) {

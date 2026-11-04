@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,13 +37,13 @@ class ItemController {
         this.catalog = catalog;
     }
 
-    record ItemRequest(
+    record CatalogItemRequest(
             @NotBlank @Size(max = 80) String name,
             @NotNull ItemKind kind,
             @NotNull StoreType storeType,
             @NotNull Aisle aisle,
             @NotNull Unit unit,
-            @PositiveOrZero Long unitPriceCents) {
+            @Nullable @PositiveOrZero Long unitPriceCents) {
 
         ItemData toData() {
             return new ItemData(name, kind, storeType, aisle, unit, unitPriceCents);
@@ -50,18 +51,19 @@ class ItemController {
     }
 
     @GetMapping
-    List<Item> list(@RequestParam(required = false) ItemKind kind, @RequestParam(required = false) String q) {
+    List<Item> list(@RequestParam(required = false) @Nullable ItemKind kind,
+            @RequestParam(required = false) @Nullable String q) {
         return catalog.list(kind, q);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    Item create(@Valid @RequestBody ItemRequest request) {
+    Item create(@Valid @RequestBody CatalogItemRequest request) {
         return catalog.create(request.toData());
     }
 
     @PutMapping("/{id}")
-    Item update(@PathVariable long id, @Valid @RequestBody ItemRequest request) {
+    Item update(@PathVariable long id, @Valid @RequestBody CatalogItemRequest request) {
         return catalog.update(id, request.toData());
     }
 

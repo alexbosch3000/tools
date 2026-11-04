@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -37,7 +38,7 @@ public class RecipeRepository {
         this.jdbc = jdbc;
     }
 
-    public List<RecipeSummary> findSummaries(String query) {
+    public List<RecipeSummary> findSummaries(@Nullable String query) {
         String like = query == null || query.isBlank() ? null : "%" + query.trim() + "%";
         return jdbc.sql("""
                 SELECT r.id, r.name, r.servings, r.prep_minutes, r.cook_minutes, r.tags,
@@ -79,7 +80,7 @@ public class RecipeRepository {
                 .params(data.name().trim(), data.servings(), data.prepMinutes(), data.cookMinutes(),
                         instructions(data), Db.csv(data.tags()), data.sourceUrl(), Db.text(now))
                 .update(keys);
-        return keys.getKey().longValue();
+        return Db.key(keys);
     }
 
     public void update(long id, RecipeData data) {

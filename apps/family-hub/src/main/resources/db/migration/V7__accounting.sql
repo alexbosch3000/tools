@@ -70,6 +70,7 @@ INSERT INTO budget_category (code, name, direction, budget_group, position) VALU
     ('impots', 'Impôts', 'EXPENSE', 'NEEDS', 18),
     ('scolarite', 'Scolarité', 'EXPENSE', 'NEEDS', 19),
     ('garde', 'Garde et centre aéré', 'EXPENSE', 'NEEDS', 20),
+    ('vetements', 'Vêtements et chaussures', 'EXPENSE', 'NEEDS', 21),
     ('maison', 'Maison, bricolage, jardin', 'EXPENSE', 'WANTS', 30),
     ('sport', 'Sport', 'EXPENSE', 'WANTS', 31),
     ('loisirs', 'Loisirs et sorties', 'EXPENSE', 'WANTS', 32),

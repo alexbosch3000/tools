@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -37,8 +38,9 @@ public class AccountingRepository {
     }
 
     /** Values written for a transaction; the direction is not stored, it comes from the category. */
-    public record TransactionRow(LocalDate day, String label, long amountCents, String categoryCode, Long accountId,
-            TransactionStatus status, SourceType sourceType, String sourceRef, String supplier, Long createdBy) {
+    public record TransactionRow(LocalDate day, String label, long amountCents, String categoryCode,
+            @Nullable Long accountId, TransactionStatus status, SourceType sourceType, @Nullable String sourceRef,
+            @Nullable String supplier, @Nullable Long createdBy) {
     }
 
     // Accounts
@@ -61,7 +63,7 @@ public class AccountingRepository {
         KeyHolder keys = new GeneratedKeyHolder();
         jdbc.sql("INSERT INTO account (name, kind, opening_balance_cents) VALUES (?, ?, ?)")
                 .params(name, kind.name(), openingBalanceCents).update(keys);
-        return keys.getKey().longValue();
+        return Db.key(keys);
     }
 
     public int updateAccount(long id, String name, AccountKind kind, long openingBalanceCents) {
@@ -93,7 +95,8 @@ public class AccountingRepository {
                 .update();
     }
 
-    public int updateCategory(String code, String name, BudgetGroup group, Long monthlyBudgetCents) {
+    public int updateCategory(String code, String name, @Nullable BudgetGroup group,
+            @Nullable Long monthlyBudgetCents) {
         return jdbc.sql("""
                 UPDATE budget_category SET name = ?, budget_group = ?, monthly_budget_cents = ?
                 WHERE code = ?""")
@@ -139,7 +142,7 @@ public class AccountingRepository {
                         row.status().name(), row.sourceType().name(), row.sourceRef(), row.supplier(),
                         row.createdBy(), Db.text(now))
                 .update(keys);
-        return keys.getKey().longValue();
+        return Db.key(keys);
     }
 
     /** Inserts unless a transaction with the same source already exists; returns whether it inserted. */
@@ -155,7 +158,7 @@ public class AccountingRepository {
     }
 
     public void updateTransaction(long id, LocalDate day, String label, long amountCents, String categoryCode,
-            Long accountId, String supplier) {
+            @Nullable Long accountId, @Nullable String supplier) {
         jdbc.sql("""
                 UPDATE ledger_transaction SET day = ?, label = ?, amount_cents = ?, category_code = ?, account_id = ?,
                     supplier = ?
@@ -167,7 +170,7 @@ public class AccountingRepository {
         jdbc.sql("UPDATE ledger_transaction SET status = ? WHERE id = ?").params(status.name(), id).update();
     }
 
-    public void approve(long id, Long memberId, LocalDateTime now) {
+    public void approve(long id, @Nullable Long memberId, LocalDateTime now) {
         jdbc.sql("UPDATE ledger_transaction SET status = 'APPROVED', approved_by = ?, approved_at = ? WHERE id = ?")
                 .params(memberId, Db.text(now), id).update();
     }
@@ -212,7 +215,7 @@ public class AccountingRepository {
                 .params(r.label(), r.categoryCode(), r.supplier(), r.amountCents(), r.period().name(), r.dayOfMonth(),
                         Db.text(r.startDate()), Db.text(r.endDate()), r.accountId(), r.active())
                 .update(keys);
-        return keys.getKey().longValue();
+        return Db.key(keys);
     }
 
     public void updateRecurring(long id, RecurringTransaction r) {

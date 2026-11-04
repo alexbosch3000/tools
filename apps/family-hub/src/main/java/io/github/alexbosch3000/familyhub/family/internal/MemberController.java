@@ -11,6 +11,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,11 +40,13 @@ class MemberController {
             @NotBlank @Size(max = 60) String name,
             @NotBlank @Pattern(regexp = COLOR) String color,
             @NotNull Role role,
-            @Pattern(regexp = USERNAME) String username,
-            @Size(min = 8, max = 128) String password) {
+            @Nullable @Pattern(regexp = USERNAME) String username,
+            @Nullable @Size(min = 8, max = 128) String password,
+            @Nullable @Size(max = 20) String clothingSize,
+            @Nullable @Size(max = 20) String shoeSize) {
 
         MemberData toData() {
-            return new MemberData(name, color, role, username, password);
+            return new MemberData(name, color, role, username, password, clothingSize, shoeSize);
         }
     }
 

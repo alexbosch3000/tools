@@ -7,6 +7,7 @@ import io.github.alexbosch3000.familyhub.shared.NotFoundException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,10 +21,10 @@ public class CatalogService {
     }
 
     public record ItemData(String name, ItemKind kind, StoreType storeType, Aisle aisle, Unit unit,
-            Long unitPriceCents) {
+            @Nullable Long unitPriceCents) {
     }
 
-    public List<Item> list(ItemKind kind, String query) {
+    public List<Item> list(@Nullable ItemKind kind, @Nullable String query) {
         return repository.find(kind, query);
     }
 

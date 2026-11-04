@@ -1,13 +1,14 @@
-// Domain event: a shopping trip is over and its amount is known. Accounting records it, planning closes it.
+// Domain event: a shopping trip is over and what was paid is known. Accounting records it, planning closes it.
 package io.github.alexbosch3000.familyhub.shopping;
 
-import io.github.alexbosch3000.familyhub.catalog.StoreType;
 import java.time.LocalDate;
+import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
- * @param accountId      account the purchase was paid from, null when not specified
- * @param mainStoreType  store type of most of the list's items, a hint for categorising the expense
+ * @param accountId account the purchases were paid from, null when not specified
+ * @param payments  amounts per kind of shop: groceries, clothes and DIY end up in different categories
  */
-public record ShoppingListCompleted(long listId, String name, LocalDate paidOn, long amountCents, Long accountId,
-        StoreType mainStoreType) {
+public record ShoppingListCompleted(long listId, String name, LocalDate paidOn, @Nullable Long accountId,
+        List<ShoppingPayment> payments) {
 }

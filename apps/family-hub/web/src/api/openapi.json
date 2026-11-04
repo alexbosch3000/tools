@@ -1,0 +1,3922 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "description" : "Family organizer API. Send the token returned by /api/auth/login as a Bearer token.",
+    "title" : "family-hub",
+    "version" : "1"
+  },
+  "servers" : [ {
+    "url" : "/"
+  } ],
+  "security" : [ {
+    "bearer" : [ ]
+  } ],
+  "paths" : {
+    "/api/accounting/accounts" : {
+      "get" : {
+        "operationId" : "accounts",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Account"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      },
+      "post" : {
+        "operationId" : "createAccount",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AccountRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Account"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/accounts/{id}" : {
+      "delete" : {
+        "operationId" : "deleteAccount",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateAccount",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AccountRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Account"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/approvals" : {
+      "get" : {
+        "operationId" : "approvals",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Transaction"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/categories" : {
+      "get" : {
+        "operationId" : "categories",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Category"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      },
+      "post" : {
+        "operationId" : "createCategory",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CategoryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Category"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/categories/{code}" : {
+      "delete" : {
+        "operationId" : "deleteCategory",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "code",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateCategory",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "code",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CategoryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Category"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/recurring" : {
+      "get" : {
+        "operationId" : "recurring",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/RecurringTransaction"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      },
+      "post" : {
+        "operationId" : "createRecurring",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RecurringRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RecurringTransaction"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/recurring/generate" : {
+      "post" : {
+        "operationId" : "generate",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "month",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Generated"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/recurring/{id}" : {
+      "delete" : {
+        "operationId" : "deleteRecurring",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateRecurring",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RecurringRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RecurringTransaction"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/reports/monthly" : {
+      "get" : {
+        "operationId" : "monthly",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "month",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MonthlyReport"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/reports/yearly" : {
+      "get" : {
+        "operationId" : "yearly",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 2200,
+            "minimum" : 1900
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/YearlyReport"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/transactions" : {
+      "get" : {
+        "operationId" : "transactions",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "month",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Transaction"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      },
+      "post" : {
+        "operationId" : "create_6",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TransactionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Transaction"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/transactions/{id}" : {
+      "delete" : {
+        "operationId" : "delete_6",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      },
+      "put" : {
+        "operationId" : "update_6",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TransactionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Transaction"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/accounting/transactions/{id}/approve" : {
+      "post" : {
+        "operationId" : "approve",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ApprovalRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Transaction"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "accounting-controller" ]
+      }
+    },
+    "/api/admin/backup" : {
+      "get" : {
+        "operationId" : "backup",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "backup-controller" ]
+      }
+    },
+    "/api/auth/login" : {
+      "post" : {
+        "operationId" : "login",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Session"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          }
+        },
+        "tags" : [ "session-controller" ]
+      }
+    },
+    "/api/auth/logout" : {
+      "post" : {
+        "operationId" : "logout",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          }
+        },
+        "tags" : [ "session-controller" ]
+      }
+    },
+    "/api/dashboard" : {
+      "get" : {
+        "operationId" : "dashboard",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Dashboard"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dashboard-controller" ]
+      }
+    },
+    "/api/items" : {
+      "get" : {
+        "operationId" : "list_3",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "kind",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/ItemKind"
+          }
+        }, {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Item"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "item-controller" ]
+      },
+      "post" : {
+        "operationId" : "create_5",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CatalogItemRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Item"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "item-controller" ]
+      }
+    },
+    "/api/items/{id}" : {
+      "delete" : {
+        "operationId" : "delete_5",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "item-controller" ]
+      },
+      "put" : {
+        "operationId" : "update_5",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CatalogItemRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Item"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "item-controller" ]
+      }
+    },
+    "/api/members" : {
+      "get" : {
+        "operationId" : "list_2",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Member"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "member-controller" ]
+      },
+      "post" : {
+        "operationId" : "create_4",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MemberRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Member"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "member-controller" ]
+      }
+    },
+    "/api/members/me/calendar-token" : {
+      "delete" : {
+        "operationId" : "revokeCalendarToken",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "member-controller" ]
+      },
+      "post" : {
+        "operationId" : "newCalendarToken",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CalendarToken"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "member-controller" ]
+      }
+    },
+    "/api/members/{id}" : {
+      "delete" : {
+        "operationId" : "delete_4",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "member-controller" ]
+      },
+      "put" : {
+        "operationId" : "update_4",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MemberRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Member"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "member-controller" ]
+      }
+    },
+    "/api/planning/entries" : {
+      "post" : {
+        "operationId" : "create_3",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EntryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanningEntry"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "planning-controller" ]
+      }
+    },
+    "/api/planning/entries/{id}" : {
+      "delete" : {
+        "operationId" : "delete_3",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "planning-controller" ]
+      },
+      "get" : {
+        "operationId" : "get_2",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanningEntry"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "planning-controller" ]
+      },
+      "put" : {
+        "operationId" : "update_3",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EntryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanningEntry"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "planning-controller" ]
+      }
+    },
+    "/api/planning/entries/{id}/done" : {
+      "put" : {
+        "operationId" : "done_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EntryDoneRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanningEntry"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "planning-controller" ]
+      }
+    },
+    "/api/planning/entries/{id}/exceptions" : {
+      "post" : {
+        "operationId" : "skip",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DayRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanningEntry"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "planning-controller" ]
+      }
+    },
+    "/api/planning/feed/{token}.ics" : {
+      "get" : {
+        "operationId" : "feed",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "token",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "calendar-feed-controller" ]
+      }
+    },
+    "/api/planning/holidays" : {
+      "get" : {
+        "operationId" : "holidays",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 2200,
+            "minimum" : 1900
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Holiday"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "planning-controller" ]
+      }
+    },
+    "/api/planning/meals/shopping" : {
+      "post" : {
+        "operationId" : "mealShopping",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MealShoppingRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MealShopping"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "planning-controller" ]
+      }
+    },
+    "/api/planning/occurrences" : {
+      "get" : {
+        "operationId" : "occurrences",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "from",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Occurrence"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "planning-controller" ]
+      }
+    },
+    "/api/recipes" : {
+      "get" : {
+        "operationId" : "list_1",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/RecipeSummary"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "recipe-controller" ]
+      },
+      "post" : {
+        "operationId" : "create_2",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RecipeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Recipe"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "recipe-controller" ]
+      }
+    },
+    "/api/recipes/suggestions" : {
+      "get" : {
+        "operationId" : "suggestions",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "itemIds",
+          "required" : true,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/RecipeSuggestion"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "recipe-controller" ]
+      }
+    },
+    "/api/recipes/{id}" : {
+      "delete" : {
+        "operationId" : "delete_2",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "recipe-controller" ]
+      },
+      "get" : {
+        "operationId" : "get_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "servings",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "maximum" : 50,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Recipe"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "recipe-controller" ]
+      },
+      "put" : {
+        "operationId" : "update_2",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RecipeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Recipe"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "recipe-controller" ]
+      }
+    },
+    "/api/session" : {
+      "get" : {
+        "operationId" : "session",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SessionState"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          }
+        },
+        "tags" : [ "session-controller" ]
+      }
+    },
+    "/api/setup" : {
+      "post" : {
+        "operationId" : "setup",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SetupRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Session"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          }
+        },
+        "tags" : [ "session-controller" ]
+      }
+    },
+    "/api/shopping/lists" : {
+      "get" : {
+        "operationId" : "list",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/ShoppingStatus",
+            "default" : "OPEN"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ShoppingListSummary"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      },
+      "post" : {
+        "operationId" : "create_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ShoppingListRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      }
+    },
+    "/api/shopping/lists/{id}" : {
+      "delete" : {
+        "operationId" : "delete_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      },
+      "get" : {
+        "operationId" : "get",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      },
+      "put" : {
+        "operationId" : "update_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ShoppingListRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      }
+    },
+    "/api/shopping/lists/{id}/complete" : {
+      "post" : {
+        "operationId" : "complete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CompleteRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      }
+    },
+    "/api/shopping/lists/{id}/items/{itemId}" : {
+      "delete" : {
+        "operationId" : "removeRow",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "path",
+          "name" : "itemId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "memberId",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      }
+    },
+    "/api/shopping/lists/{id}/items/{itemId}/checked" : {
+      "put" : {
+        "operationId" : "check",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "path",
+          "name" : "itemId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "memberId",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CheckRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      }
+    },
+    "/api/shopping/lists/{id}/lines" : {
+      "post" : {
+        "operationId" : "addLine",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LineRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      }
+    },
+    "/api/shopping/lists/{id}/recipes" : {
+      "post" : {
+        "operationId" : "addRecipe",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ListRecipeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      }
+    },
+    "/api/shopping/lists/{id}/recipes/{entryId}" : {
+      "delete" : {
+        "operationId" : "removeRecipe",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "path",
+          "name" : "entryId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      }
+    },
+    "/api/todo/items" : {
+      "get" : {
+        "operationId" : "items",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "listId",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "assigneeId",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "includeDone",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TodoItem"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "todo-controller" ]
+      },
+      "post" : {
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TodoItemRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TodoItem"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "todo-controller" ]
+      }
+    },
+    "/api/todo/items/{id}" : {
+      "delete" : {
+        "operationId" : "delete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "todo-controller" ]
+      },
+      "put" : {
+        "operationId" : "update",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TodoItemRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TodoItem"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "todo-controller" ]
+      }
+    },
+    "/api/todo/items/{id}/done" : {
+      "put" : {
+        "operationId" : "done",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TodoDoneRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TodoItem"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "todo-controller" ]
+      }
+    },
+    "/api/todo/lists" : {
+      "get" : {
+        "operationId" : "lists",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TodoList"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "todo-controller" ]
+      },
+      "post" : {
+        "operationId" : "createList",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TodoListRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TodoList"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "todo-controller" ]
+      }
+    },
+    "/api/todo/lists/{id}" : {
+      "delete" : {
+        "operationId" : "deleteList",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "todo-controller" ]
+      },
+      "put" : {
+        "operationId" : "renameList",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TodoListRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TodoList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "todo-controller" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "Account" : {
+        "type" : "object",
+        "properties" : {
+          "balanceCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "kind" : {
+            "$ref" : "#/components/schemas/AccountKind"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "openingBalanceCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "balanceCents", "id", "kind", "name", "openingBalanceCents" ]
+      },
+      "AccountKind" : {
+        "type" : "string",
+        "enum" : [ "CHECKING", "SAVINGS", "CASH", "CARD" ]
+      },
+      "AccountRequest" : {
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "$ref" : "#/components/schemas/AccountKind"
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 60,
+            "minLength" : 0
+          },
+          "openingBalanceCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "kind", "name", "openingBalanceCents" ]
+      },
+      "AccountingAction" : {
+        "type" : "string",
+        "enum" : [ "REPORT", "APPROVAL" ]
+      },
+      "AccountingSummary" : {
+        "type" : "object",
+        "properties" : {
+          "accounts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Account"
+            }
+          },
+          "budgetTotalCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "expenseActualCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "expenseForecastCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "month" : {
+            "type" : "string"
+          },
+          "pendingApprovals" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "upcoming" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Transaction"
+            }
+          }
+        },
+        "required" : [ "accounts", "budgetTotalCents", "expenseActualCents", "expenseForecastCents", "month", "pendingApprovals", "upcoming" ]
+      },
+      "Aisle" : {
+        "type" : "string",
+        "enum" : [ "FRUITS_VEGETABLES", "BAKERY", "MEAT_FISH", "DAIRY", "GROCERY", "FROZEN", "DRINKS", "HYGIENE", "HOUSEHOLD", "BABY", "PETS", "HEALTH", "CLOTHES_ADULTS", "CLOTHES_CHILDREN", "CLOTHES_BABY", "UNDERWEAR", "SHOES", "SPORTSWEAR", "ACCESSORIES", "TOOLS", "HARDWARE", "PAINT", "ELECTRICITY", "PLUMBING", "PLANTS", "GARDEN_SUPPLIES", "OTHER" ]
+      },
+      "ApprovalRequest" : {
+        "type" : "object",
+        "properties" : {
+          "accountId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "amountCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "categoryCode" : {
+            "type" : [ "string", "null" ]
+          },
+          "day" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          }
+        }
+      },
+      "BudgetGroup" : {
+        "type" : "string",
+        "enum" : [ "NEEDS", "WANTS", "SAVINGS" ]
+      },
+      "CalendarToken" : {
+        "type" : "object",
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "token" ]
+      },
+      "CatalogItemRequest" : {
+        "type" : "object",
+        "properties" : {
+          "aisle" : {
+            "$ref" : "#/components/schemas/Aisle"
+          },
+          "kind" : {
+            "$ref" : "#/components/schemas/ItemKind"
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 80,
+            "minLength" : 0
+          },
+          "storeType" : {
+            "$ref" : "#/components/schemas/StoreType"
+          },
+          "unit" : {
+            "$ref" : "#/components/schemas/Unit"
+          },
+          "unitPriceCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64",
+            "minimum" : 0
+          }
+        },
+        "required" : [ "aisle", "kind", "name", "storeType", "unit" ]
+      },
+      "Category" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "direction" : {
+            "$ref" : "#/components/schemas/Direction"
+          },
+          "group" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/BudgetGroup"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "monthlyBudgetCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "position" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "code", "direction", "name", "position" ]
+      },
+      "CategoryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "direction" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Direction"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "group" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/BudgetGroup"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "monthlyBudgetCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 60,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "name" ]
+      },
+      "CheckRequest" : {
+        "type" : "object",
+        "properties" : {
+          "checked" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "checked" ]
+      },
+      "CompleteRequest" : {
+        "type" : "object",
+        "properties" : {
+          "accountId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "paidOn" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "payments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PaymentRequest"
+            },
+            "maxItems" : 12,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "payments" ]
+      },
+      "Dashboard" : {
+        "type" : "object",
+        "properties" : {
+          "accounting" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/AccountingSummary"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "agenda" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Occurrence"
+            }
+          },
+          "dueSoonTodos" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TodoItem"
+            }
+          },
+          "load" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MemberLoad"
+            }
+          },
+          "overdueTodos" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TodoItem"
+            }
+          },
+          "plannedMeals" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "shoppingLists" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ShoppingListSummary"
+            }
+          },
+          "today" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        },
+        "required" : [ "agenda", "dueSoonTodos", "load", "overdueTodos", "plannedMeals", "shoppingLists", "today" ]
+      },
+      "DayOfWeek" : {
+        "type" : "string",
+        "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+      },
+      "DayRequest" : {
+        "type" : "object",
+        "properties" : {
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        },
+        "required" : [ "day" ]
+      },
+      "Direction" : {
+        "type" : "string",
+        "enum" : [ "INCOME", "EXPENSE" ]
+      },
+      "EntryDoneRequest" : {
+        "type" : "object",
+        "properties" : {
+          "done" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "done" ]
+      },
+      "EntryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "accountingAction" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/AccountingAction"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "allDay" : {
+            "type" : "boolean"
+          },
+          "category" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/EventCategory"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "createShoppingList" : {
+            "type" : "boolean"
+          },
+          "description" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 4000,
+            "minLength" : 0
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "estimatedCostCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "location" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "memberIds" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "maxItems" : 20,
+            "minItems" : 0
+          },
+          "recipeId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "recurrence" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/RecurrenceRequest"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "servings" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "maximum" : 50,
+            "minimum" : 1
+          },
+          "shoppingListId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "title" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/EntryType"
+          }
+        },
+        "required" : [ "allDay", "createShoppingList", "end", "start", "title", "type" ]
+      },
+      "EntryType" : {
+        "type" : "string",
+        "enum" : [ "EVENT", "SHOPPING", "MEAL", "ACCOUNTING" ]
+      },
+      "EventCategory" : {
+        "type" : "string",
+        "enum" : [ "VACATION", "DAY_CAMP", "TAXES", "SPORT", "HEALTH", "SCHOOL", "LEISURE", "BIRTHDAY", "HOUSEHOLD", "UTILITIES", "OTHER" ]
+      },
+      "Frequency" : {
+        "type" : "string",
+        "enum" : [ "DAILY", "WEEKLY", "MONTHLY", "YEARLY" ]
+      },
+      "Generated" : {
+        "type" : "object",
+        "properties" : {
+          "created" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "created" ]
+      },
+      "GroupLine" : {
+        "type" : "object",
+        "properties" : {
+          "actualCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "group" : {
+            "$ref" : "#/components/schemas/BudgetGroup"
+          },
+          "sharePercent" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "targetPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "actualCents", "group", "targetPercent" ]
+      },
+      "Holiday" : {
+        "type" : "object",
+        "properties" : {
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "day", "name" ]
+      },
+      "IngredientRequest" : {
+        "type" : "object",
+        "properties" : {
+          "itemId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "note" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "quantity" : {
+            "type" : "number",
+            "format" : "double",
+            "exclusiveMinimum" : 0
+          },
+          "unit" : {
+            "$ref" : "#/components/schemas/Unit"
+          }
+        },
+        "required" : [ "itemId", "quantity", "unit" ]
+      },
+      "Item" : {
+        "type" : "object",
+        "properties" : {
+          "aisle" : {
+            "$ref" : "#/components/schemas/Aisle"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "kind" : {
+            "$ref" : "#/components/schemas/ItemKind"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "storeType" : {
+            "$ref" : "#/components/schemas/StoreType"
+          },
+          "unit" : {
+            "$ref" : "#/components/schemas/Unit"
+          },
+          "unitPriceCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          }
+        },
+        "required" : [ "aisle", "id", "kind", "name", "storeType", "unit" ]
+      },
+      "ItemKind" : {
+        "type" : "string",
+        "enum" : [ "GOODS", "INGREDIENT" ]
+      },
+      "Line" : {
+        "type" : "object",
+        "properties" : {
+          "actualCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "budgetCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "direction" : {
+            "$ref" : "#/components/schemas/Direction"
+          },
+          "forecastCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "group" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/BudgetGroup"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "remainingCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          }
+        },
+        "required" : [ "actualCents", "code", "direction", "forecastCents", "name" ]
+      },
+      "LineRequest" : {
+        "type" : "object",
+        "properties" : {
+          "itemId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "memberId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "note" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "quantity" : {
+            "type" : "number",
+            "format" : "double",
+            "exclusiveMinimum" : 0
+          },
+          "unit" : {
+            "$ref" : "#/components/schemas/Unit"
+          }
+        },
+        "required" : [ "itemId", "quantity", "unit" ]
+      },
+      "ListRecipeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "recipeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "servings" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 50,
+            "minimum" : 1
+          }
+        },
+        "required" : [ "recipeId", "servings" ]
+      },
+      "ListedRecipe" : {
+        "type" : "object",
+        "properties" : {
+          "entryId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "recipeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "servings" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "entryId", "name", "recipeId", "servings" ]
+      },
+      "LoginRequest" : {
+        "type" : "object",
+        "properties" : {
+          "password" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 0
+          },
+          "username" : {
+            "type" : "string",
+            "maxLength" : 32,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "password", "username" ]
+      },
+      "MealShopping" : {
+        "type" : "object",
+        "properties" : {
+          "meals" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "shoppingListId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "meals", "shoppingListId" ]
+      },
+      "MealShoppingRequest" : {
+        "type" : "object",
+        "properties" : {
+          "from" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "name" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 80,
+            "minLength" : 0
+          },
+          "shoppingListId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        },
+        "required" : [ "from", "to" ]
+      },
+      "Member" : {
+        "type" : "object",
+        "properties" : {
+          "clothingSize" : {
+            "type" : [ "string", "null" ]
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "hasCalendarFeed" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "role" : {
+            "$ref" : "#/components/schemas/Role"
+          },
+          "shoeSize" : {
+            "type" : [ "string", "null" ]
+          },
+          "username" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "color", "hasCalendarFeed", "id", "name", "role" ]
+      },
+      "MemberLoad" : {
+        "type" : "object",
+        "properties" : {
+          "color" : {
+            "type" : "string"
+          },
+          "entries" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "memberId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "todos" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "color", "entries", "memberId", "name", "todos" ]
+      },
+      "MemberRequest" : {
+        "type" : "object",
+        "properties" : {
+          "clothingSize" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 20,
+            "minLength" : 0
+          },
+          "color" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "^#[0-9a-fA-F]{6}$"
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 60,
+            "minLength" : 0
+          },
+          "password" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 128,
+            "minLength" : 8
+          },
+          "role" : {
+            "$ref" : "#/components/schemas/Role"
+          },
+          "shoeSize" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 20,
+            "minLength" : 0
+          },
+          "username" : {
+            "type" : [ "string", "null" ],
+            "pattern" : "^[a-zA-Z0-9._-]{3,32}$"
+          }
+        },
+        "required" : [ "color", "name", "role" ]
+      },
+      "Month" : {
+        "type" : "object",
+        "properties" : {
+          "expenseActualCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "expenseForecastCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "incomeActualCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "incomeForecastCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "month" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "expenseActualCents", "expenseForecastCents", "incomeActualCents", "incomeForecastCents", "month" ]
+      },
+      "MonthlyReport" : {
+        "type" : "object",
+        "properties" : {
+          "budgetTotalCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "categories" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Line"
+            }
+          },
+          "expenseActualCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "expenseForecastCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "groups" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/GroupLine"
+            }
+          },
+          "incomeActualCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "incomeForecastCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "month" : {
+            "type" : "string"
+          },
+          "netActualCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "budgetTotalCents", "categories", "expenseActualCents", "expenseForecastCents", "groups", "incomeActualCents", "incomeForecastCents", "month", "netActualCents" ]
+      },
+      "Occurrence" : {
+        "type" : "object",
+        "properties" : {
+          "end" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "entry" : {
+            "$ref" : "#/components/schemas/PlanningEntry"
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "end", "entry", "start" ]
+      },
+      "PaymentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "amountCents" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "storeType" : {
+            "$ref" : "#/components/schemas/StoreType"
+          }
+        },
+        "required" : [ "amountCents", "storeType" ]
+      },
+      "Period" : {
+        "type" : "string",
+        "enum" : [ "MONTHLY", "BIMONTHLY", "QUARTERLY", "SEMIANNUAL", "YEARLY" ]
+      },
+      "PlanningEntry" : {
+        "type" : "object",
+        "properties" : {
+          "accountingAction" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/AccountingAction"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "allDay" : {
+            "type" : "boolean"
+          },
+          "category" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/EventCategory"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "done" : {
+            "type" : "boolean"
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "estimatedCostCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "exceptions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "date"
+            }
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "location" : {
+            "type" : [ "string", "null" ]
+          },
+          "memberIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "recipeId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "recurrence" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Recurrence"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "servings" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "shoppingListId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/EntryType"
+          }
+        },
+        "required" : [ "allDay", "description", "done", "end", "exceptions", "id", "memberIds", "start", "title", "type" ]
+      },
+      "Priority" : {
+        "type" : "string",
+        "enum" : [ "LOW", "NORMAL", "HIGH" ]
+      },
+      "ProblemDetail" : {
+        "type" : "object",
+        "properties" : {
+          "detail" : {
+            "type" : "string"
+          },
+          "instance" : {
+            "type" : "string",
+            "format" : "uri"
+          },
+          "properties" : {
+            "type" : "object",
+            "additionalProperties" : { }
+          },
+          "status" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "format" : "uri"
+          }
+        }
+      },
+      "Quantity" : {
+        "type" : "object",
+        "properties" : {
+          "amount" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "unit" : {
+            "$ref" : "#/components/schemas/Unit"
+          }
+        },
+        "required" : [ "amount", "unit" ]
+      },
+      "Recipe" : {
+        "type" : "object",
+        "properties" : {
+          "cookMinutes" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "ingredients" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RecipeIngredient"
+            }
+          },
+          "instructions" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "prepMinutes" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "servings" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sourceUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "id", "ingredients", "instructions", "name", "servings", "tags" ]
+      },
+      "RecipeIngredient" : {
+        "type" : "object",
+        "properties" : {
+          "itemId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "itemName" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "quantity" : {
+            "$ref" : "#/components/schemas/Quantity"
+          }
+        },
+        "required" : [ "itemId", "itemName", "quantity" ]
+      },
+      "RecipeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "cookMinutes" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "minimum" : 0
+          },
+          "ingredients" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/IngredientRequest"
+            },
+            "maxItems" : 100,
+            "minItems" : 0
+          },
+          "instructions" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 20000,
+            "minLength" : 0
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "prepMinutes" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "minimum" : 0
+          },
+          "servings" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 50,
+            "minimum" : 1
+          },
+          "sourceUrl" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 500,
+            "minLength" : 0
+          },
+          "tags" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "string",
+              "maxLength" : 30,
+              "minLength" : 0
+            },
+            "maxItems" : 20,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "ingredients", "name", "servings" ]
+      },
+      "RecipeSuggestion" : {
+        "type" : "object",
+        "properties" : {
+          "coverage" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "missing" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "recipeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "servings" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "coverage", "missing", "name", "recipeId", "servings" ]
+      },
+      "RecipeSummary" : {
+        "type" : "object",
+        "properties" : {
+          "cookMinutes" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "ingredientCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "prepMinutes" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "servings" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "id", "ingredientCount", "name", "servings", "tags" ]
+      },
+      "Recurrence" : {
+        "type" : "object",
+        "properties" : {
+          "days" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DayOfWeek"
+            }
+          },
+          "frequency" : {
+            "$ref" : "#/components/schemas/Frequency"
+          },
+          "interval" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "until" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          }
+        },
+        "required" : [ "days", "frequency", "interval" ]
+      },
+      "RecurrenceRequest" : {
+        "type" : "object",
+        "properties" : {
+          "days" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "$ref" : "#/components/schemas/DayOfWeek"
+            }
+          },
+          "frequency" : {
+            "$ref" : "#/components/schemas/Frequency"
+          },
+          "interval" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 99,
+            "minimum" : 1
+          },
+          "until" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          }
+        },
+        "required" : [ "frequency", "interval" ]
+      },
+      "RecurringRequest" : {
+        "type" : "object",
+        "properties" : {
+          "accountId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "active" : {
+            "type" : "boolean"
+          },
+          "amountCents" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "categoryCode" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "dayOfMonth" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 31,
+            "minimum" : 1
+          },
+          "endDate" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "label" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "period" : {
+            "$ref" : "#/components/schemas/Period"
+          },
+          "startDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "supplier" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 80,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "active", "amountCents", "categoryCode", "dayOfMonth", "label", "period", "startDate" ]
+      },
+      "RecurringTransaction" : {
+        "type" : "object",
+        "properties" : {
+          "accountId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "active" : {
+            "type" : "boolean"
+          },
+          "amountCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "categoryCode" : {
+            "type" : "string"
+          },
+          "dayOfMonth" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "endDate" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "period" : {
+            "$ref" : "#/components/schemas/Period"
+          },
+          "startDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "supplier" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "active", "amountCents", "categoryCode", "dayOfMonth", "id", "label", "period", "startDate" ]
+      },
+      "Repeat" : {
+        "type" : "string",
+        "enum" : [ "DAILY", "WEEKLY", "MONTHLY" ]
+      },
+      "Role" : {
+        "type" : "string",
+        "enum" : [ "PARENT", "CHILD" ]
+      },
+      "Session" : {
+        "type" : "object",
+        "properties" : {
+          "member" : {
+            "$ref" : "#/components/schemas/Member"
+          },
+          "token" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "member", "token" ]
+      },
+      "SessionState" : {
+        "type" : "object",
+        "properties" : {
+          "member" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Member"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "setupRequired" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "setupRequired" ]
+      },
+      "SetupRequest" : {
+        "type" : "object",
+        "properties" : {
+          "color" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "^#[0-9a-fA-F]{6}$"
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 60,
+            "minLength" : 0
+          },
+          "password" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 8
+          },
+          "username" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "^[a-zA-Z0-9._-]{3,32}$"
+          }
+        },
+        "required" : [ "color", "name", "password", "username" ]
+      },
+      "ShoppingList" : {
+        "type" : "object",
+        "properties" : {
+          "amountPaidCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "checkedCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "completedOn" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "estimatedTotalCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "plannedFor" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "recipes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ListedRecipe"
+            }
+          },
+          "rows" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ShoppingRow"
+            }
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/ShoppingStatus"
+          },
+          "unpricedRows" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "checkedCount", "estimatedTotalCents", "id", "name", "recipes", "rows", "status", "unpricedRows" ]
+      },
+      "ShoppingListRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 80,
+            "minLength" : 0
+          },
+          "plannedFor" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          }
+        },
+        "required" : [ "name" ]
+      },
+      "ShoppingListSummary" : {
+        "type" : "object",
+        "properties" : {
+          "amountPaidCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "checkedCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "completedOn" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "estimatedTotalCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "itemCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "plannedFor" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/ShoppingStatus"
+          }
+        },
+        "required" : [ "checkedCount", "estimatedTotalCents", "id", "itemCount", "name", "status" ]
+      },
+      "ShoppingRow" : {
+        "type" : "object",
+        "properties" : {
+          "aisle" : {
+            "$ref" : "#/components/schemas/Aisle"
+          },
+          "checked" : {
+            "type" : "boolean"
+          },
+          "estimatedCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "itemId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "kind" : {
+            "$ref" : "#/components/schemas/ItemKind"
+          },
+          "manual" : {
+            "type" : "boolean"
+          },
+          "memberId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "notes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "quantities" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Quantity"
+            }
+          },
+          "recipes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "storeType" : {
+            "$ref" : "#/components/schemas/StoreType"
+          }
+        },
+        "required" : [ "aisle", "checked", "itemId", "kind", "manual", "name", "notes", "quantities", "recipes", "storeType" ]
+      },
+      "ShoppingStatus" : {
+        "type" : "string",
+        "enum" : [ "OPEN", "DONE" ]
+      },
+      "SourceType" : {
+        "type" : "string",
+        "enum" : [ "MANUAL", "PLANNING", "SHOPPING", "RECURRING" ]
+      },
+      "StoreType" : {
+        "type" : "string",
+        "enum" : [ "SUPERMARKET", "MARKET", "BAKERY", "BUTCHER", "PHARMACY", "CLOTHING", "DIY", "GARDEN", "ONLINE", "OTHER" ]
+      },
+      "TodoDoneRequest" : {
+        "type" : "object",
+        "properties" : {
+          "done" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "done" ]
+      },
+      "TodoItem" : {
+        "type" : "object",
+        "properties" : {
+          "assigneeId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "done" : {
+            "type" : "boolean"
+          },
+          "doneAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "dueAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "listId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "notes" : {
+            "type" : "string"
+          },
+          "priority" : {
+            "$ref" : "#/components/schemas/Priority"
+          },
+          "repeat" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Repeat"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "done", "id", "listId", "notes", "priority", "title" ]
+      },
+      "TodoItemRequest" : {
+        "type" : "object",
+        "properties" : {
+          "assigneeId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "dueAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "listId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "notes" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 4000,
+            "minLength" : 0
+          },
+          "priority" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Priority"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "repeat" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Repeat"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "title" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "listId", "title" ]
+      },
+      "TodoList" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "openCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "id", "name", "openCount" ]
+      },
+      "TodoListRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 60,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "name" ]
+      },
+      "Transaction" : {
+        "type" : "object",
+        "properties" : {
+          "accountId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "amountCents" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "approvedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "approvedBy" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "categoryCode" : {
+            "type" : "string"
+          },
+          "categoryName" : {
+            "type" : "string"
+          },
+          "createdBy" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "direction" : {
+            "$ref" : "#/components/schemas/Direction"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "sourceRef" : {
+            "type" : [ "string", "null" ]
+          },
+          "sourceType" : {
+            "$ref" : "#/components/schemas/SourceType"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/TransactionStatus"
+          },
+          "supplier" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "amountCents", "categoryCode", "categoryName", "day", "direction", "id", "label", "sourceType", "status" ]
+      },
+      "TransactionRequest" : {
+        "type" : "object",
+        "properties" : {
+          "accountId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "amountCents" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "categoryCode" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "label" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "status" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/TransactionStatus"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "supplier" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 80,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "amountCents", "categoryCode", "day", "label" ]
+      },
+      "TransactionStatus" : {
+        "type" : "string",
+        "enum" : [ "PLANNED", "PENDING", "APPROVED" ]
+      },
+      "Unit" : {
+        "type" : "string",
+        "enum" : [ "G", "KG", "ML", "CL", "L", "TSP", "TBSP", "PIECE", "PACK", "BUNCH", "PINCH" ]
+      },
+      "YearlyReport" : {
+        "type" : "object",
+        "properties" : {
+          "months" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Month"
+            }
+          },
+          "year" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "months", "year" ]
+      }
+    },
+    "securitySchemes" : {
+      "bearer" : {
+        "scheme" : "bearer",
+        "type" : "http"
+      }
+    }
+  }
+}

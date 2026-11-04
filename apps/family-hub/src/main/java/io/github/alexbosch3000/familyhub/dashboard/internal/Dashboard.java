@@ -7,6 +7,7 @@ import io.github.alexbosch3000.familyhub.shopping.ShoppingListSummary;
 import io.github.alexbosch3000.familyhub.todo.TodoItem;
 import java.time.LocalDate;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @param agenda      occurrences of the next seven days
@@ -15,7 +16,7 @@ import java.util.List;
  */
 record Dashboard(LocalDate today, List<Occurrence> agenda, List<MemberLoad> load, List<TodoItem> overdueTodos,
         List<TodoItem> dueSoonTodos, int plannedMeals, List<ShoppingListSummary> shoppingLists,
-        AccountingSummary accounting) {
+        @Nullable AccountingSummary accounting) {
 
     record MemberLoad(long memberId, String name, String color, int entries, int todos) {
     }

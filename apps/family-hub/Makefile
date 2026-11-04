@@ -5,6 +5,7 @@
 APP   := family-hub
 IMAGE ?= $(APP):local
 PORT  ?= 8080
+BASE_PATH ?= /
 MVN   := ./mvnw -B -ntp
 NPM   := npm --prefix web
 JAR   := target/$(APP).jar
@@ -18,7 +19,7 @@ SMOKE_PORT ?= 18080
 HARDENING := --read-only --tmpfs /tmp:exec --tmpfs /data --cap-drop ALL --security-opt no-new-privileges
 
 .DEFAULT_GOAL := help
-.PHONY: help install lint test audit build run dev-web image image-run smoke ci clean
+.PHONY: help install lint test audit build pages api run dev-web observe image image-run smoke ci clean
 
 help: ## List available targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -43,11 +44,21 @@ build: ## Build the user interface, then the runnable jar that serves it
 	$(NPM) run build
 	$(MVN) -DskipTests package
 
+pages: ## Build the UI alone for GitHub Pages, served under BASE_PATH and asking for the server address
+	VITE_REMOTE_API=true BASE_PATH=$(BASE_PATH) $(NPM) run build
+
+api: ## After an API change: rewrite the OpenAPI contract and regenerate the TypeScript client types
+	$(MVN) test -Dtest=OpenApiContractTest -DupdateContract=true -Dsurefire.failIfNoSpecifiedTests=false
+	$(NPM) run gen:api
+
 run: build ## Start the service on http://localhost:8080 with its database in ./data
-	java -jar $(JAR)
+	java --enable-native-access=ALL-UNNAMED -jar $(JAR)
 
 dev-web: ## Start the UI with hot reload on http://localhost:5173, proxying /api to `make run`
 	$(NPM) run dev
+
+observe: ## Run the image with Grafana, Tempo, Loki and Prometheus (otel-lgtm) on http://localhost:3000
+	docker compose -f observability/docker-compose.yml up --build
 
 image: ## Build the container image
 	docker build -t $(IMAGE) .

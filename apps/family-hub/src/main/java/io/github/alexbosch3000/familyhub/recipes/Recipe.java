@@ -2,9 +2,11 @@
 package io.github.alexbosch3000.familyhub.recipes;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
-public record Recipe(long id, String name, int servings, Integer prepMinutes, Integer cookMinutes,
-        String instructions, List<String> tags, String sourceUrl, List<RecipeIngredient> ingredients) {
+public record Recipe(long id, String name, int servings, @Nullable Integer prepMinutes,
+        @Nullable Integer cookMinutes, String instructions, List<String> tags, @Nullable String sourceUrl,
+        List<RecipeIngredient> ingredients) {
 
     /** Same recipe with every quantity adjusted to another number of servings. */
     public Recipe scaledTo(int targetServings) {

@@ -1,9 +1,10 @@
-// Authenticated identity kept in the session: the member id and role, without the password once logged in.
+// Authenticated identity of a request: the member id and role, never the password once checked.
 package io.github.alexbosch3000.familyhub.family.internal;
 
 import io.github.alexbosch3000.familyhub.family.Role;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,9 +15,9 @@ public final class MemberPrincipal implements UserDetails, CredentialsContainer 
     private final long memberId;
     private final String username;
     private final Role role;
-    private String passwordHash;
+    private @Nullable String passwordHash;
 
-    MemberPrincipal(long memberId, String username, String passwordHash, Role role) {
+    MemberPrincipal(long memberId, String username, @Nullable String passwordHash, Role role) {
         this.memberId = memberId;
         this.username = username;
         this.passwordHash = passwordHash;
@@ -37,7 +38,7 @@ public final class MemberPrincipal implements UserDetails, CredentialsContainer 
     }
 
     @Override
-    public String getPassword() {
+    public @Nullable String getPassword() {
         return passwordHash;
     }
 

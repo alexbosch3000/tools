@@ -6,11 +6,13 @@ import io.github.alexbosch3000.familyhub.family.MemberService;
 import io.github.alexbosch3000.familyhub.shared.ConflictException;
 import io.github.alexbosch3000.familyhub.shared.InvalidRequestException;
 import io.github.alexbosch3000.familyhub.shared.NotFoundException;
+import io.github.alexbosch3000.familyhub.todo.internal.TodoMetrics;
 import io.github.alexbosch3000.familyhub.todo.internal.TodoRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,16 +21,18 @@ public class TodoService {
 
     private final TodoRepository repository;
     private final MemberService members;
+    private final TodoMetrics metrics;
     private final Clock clock;
 
-    TodoService(TodoRepository repository, MemberService members, Clock clock) {
+    TodoService(TodoRepository repository, MemberService members, TodoMetrics metrics, Clock clock) {
         this.repository = repository;
         this.members = members;
+        this.metrics = metrics;
         this.clock = clock;
     }
 
-    public record ItemData(long listId, String title, String notes, Long assigneeId, LocalDateTime dueAt,
-            Priority priority, Repeat repeat) {
+    public record TodoItemData(long listId, String title, @Nullable String notes, @Nullable Long assigneeId,
+            @Nullable LocalDateTime dueAt, @Nullable Priority priority, @Nullable Repeat repeat) {
     }
 
     public List<TodoList> lists() {
@@ -57,7 +61,7 @@ public class TodoService {
     }
 
     /** Items, optionally filtered; open items first by due date, then the most recently done. */
-    public List<TodoItem> items(Long listId, Long assigneeId, boolean includeDone) {
+    public List<TodoItem> items(@Nullable Long listId, @Nullable Long assigneeId, boolean includeDone) {
         return repository.findItems(listId, assigneeId, includeDone);
     }
 
@@ -70,12 +74,12 @@ public class TodoService {
     }
 
     @Transactional
-    public TodoItem create(ItemData data) {
+    public TodoItem create(TodoItemData data) {
         return get(repository.insertItem(validated(data), LocalDateTime.now(clock)));
     }
 
     @Transactional
-    public TodoItem update(long id, ItemData data) {
+    public TodoItem update(long id, TodoItemData data) {
         get(id);
         repository.updateItem(id, validated(data));
         return get(id);
@@ -93,8 +97,11 @@ public class TodoService {
         TodoItem item = get(id);
         LocalDateTime now = LocalDateTime.now(clock).truncatedTo(ChronoUnit.MINUTES);
         repository.setDone(id, done, done ? now : null);
+        if (done && !item.done()) {
+            metrics.completed();
+        }
         if (done && !item.done() && item.repeat() != null && item.dueAt() != null) {
-            repository.insertItem(new ItemData(item.listId(), item.title(), item.notes(), item.assigneeId(),
+            repository.insertItem(new TodoItemData(item.listId(), item.title(), item.notes(), item.assigneeId(),
                     item.repeat().next(item.dueAt(), now), item.priority(), item.repeat()), now);
         }
         return get(id);
@@ -105,7 +112,7 @@ public class TodoService {
                 .orElseThrow(() -> new NotFoundException("Liste introuvable."));
     }
 
-    private ItemData validated(ItemData data) {
+    private TodoItemData validated(TodoItemData data) {
         list(data.listId());
         if (data.assigneeId() != null && members.list().stream().map(Member::id)
                 .noneMatch(id -> id.equals(data.assigneeId()))) {
@@ -115,11 +122,11 @@ public class TodoService {
             throw new InvalidRequestException("Une tâche répétée a besoin d'une échéance.");
         }
         LocalDateTime due = data.dueAt() == null ? null : data.dueAt().truncatedTo(ChronoUnit.MINUTES);
-        return new ItemData(data.listId(), data.title().trim(), data.notes() == null ? "" : data.notes(),
+        return new TodoItemData(data.listId(), data.title().trim(), data.notes() == null ? "" : data.notes(),
                 data.assigneeId(), due, data.priority() == null ? Priority.NORMAL : data.priority(), data.repeat());
     }
 
-    private void ensureListNameFree(String name, Long exceptId) {
+    private void ensureListNameFree(String name, @Nullable Long exceptId) {
         if (repository.listNameTaken(name.trim(), exceptId)) {
             throw new ConflictException("Une liste porte déjà ce nom.");
         }

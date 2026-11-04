@@ -4,14 +4,18 @@ package io.github.alexbosch3000.familyhub.shopping;
 import io.github.alexbosch3000.familyhub.catalog.CatalogService;
 import io.github.alexbosch3000.familyhub.catalog.Item;
 import io.github.alexbosch3000.familyhub.catalog.Quantity;
+import io.github.alexbosch3000.familyhub.family.MemberService;
 import io.github.alexbosch3000.familyhub.recipes.RecipeIngredient;
 import io.github.alexbosch3000.familyhub.recipes.RecipeService;
 import io.github.alexbosch3000.familyhub.shared.ConflictException;
+import io.github.alexbosch3000.familyhub.shared.InvalidRequestException;
 import io.github.alexbosch3000.familyhub.shared.NotFoundException;
 import io.github.alexbosch3000.familyhub.shopping.internal.ShoppingLine;
 import io.github.alexbosch3000.familyhub.shopping.internal.ShoppingRepository;
 import io.github.alexbosch3000.familyhub.shopping.internal.ShoppingRepository.ListRow;
 import io.github.alexbosch3000.familyhub.shopping.internal.ShoppingRows;
+import io.opentelemetry.instrumentation.annotations.SpanAttribute;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,6 +24,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,19 +34,22 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ShoppingService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ShoppingService.class);
     private static final int DONE_LISTS_SHOWN = 20;
 
     private final ShoppingRepository repository;
     private final CatalogService catalog;
     private final RecipeService recipes;
+    private final MemberService members;
     private final ApplicationEventPublisher events;
     private final Clock clock;
 
     ShoppingService(ShoppingRepository repository, CatalogService catalog, RecipeService recipes,
-            ApplicationEventPublisher events, Clock clock) {
+            MemberService members, ApplicationEventPublisher events, Clock clock) {
         this.repository = repository;
         this.catalog = catalog;
         this.recipes = recipes;
+        this.members = members;
         this.events = events;
         this.clock = clock;
     }
@@ -66,12 +76,12 @@ public class ShoppingService {
     }
 
     @Transactional
-    public ShoppingList create(String name, LocalDate plannedFor) {
+    public ShoppingList create(String name, @Nullable LocalDate plannedFor) {
         return get(repository.insertList(name, plannedFor, LocalDateTime.now(clock)));
     }
 
     @Transactional
-    public ShoppingList update(long id, String name, LocalDate plannedFor) {
+    public ShoppingList update(long id, String name, @Nullable LocalDate plannedFor) {
         findList(id);
         repository.updateList(id, name, plannedFor);
         return get(id);
@@ -83,28 +93,33 @@ public class ShoppingService {
         repository.deleteList(id);
     }
 
+    /** Adds an item, for a given member (clothes, shoes) or for the household when memberId is null. */
     @Transactional
-    public ShoppingList addItem(long listId, long itemId, Quantity quantity, String note) {
+    public ShoppingList addItem(long listId, long itemId, @Nullable Long memberId, Quantity quantity,
+            @Nullable String note) {
         requireOpen(listId);
         catalog.get(itemId);
-        repository.insertLine(listId, itemId, null, quantity, blankToNull(note));
+        if (memberId != null && !members.exists(memberId)) {
+            throw new InvalidRequestException("Membre inconnu.");
+        }
+        repository.insertLine(listId, itemId, null, memberId, quantity, blankToNull(note));
         return get(listId);
     }
 
-    /** Removes every line of the item, whether added by hand or by a recipe. */
+    /** Removes a row: every line of the item for that member, whether added by hand or by a recipe. */
     @Transactional
-    public ShoppingList removeItem(long listId, long itemId) {
+    public ShoppingList removeRow(long listId, long itemId, @Nullable Long memberId) {
         requireOpen(listId);
-        if (repository.deleteItemLines(listId, itemId) == 0) {
+        if (repository.deleteRowLines(listId, itemId, memberId) == 0) {
             throw new NotFoundException("Article absent de la liste.");
         }
         return get(listId);
     }
 
     @Transactional
-    public ShoppingList setChecked(long listId, long itemId, boolean checked) {
+    public ShoppingList setChecked(long listId, long itemId, @Nullable Long memberId, boolean checked) {
         requireOpen(listId);
-        if (repository.setChecked(listId, itemId, checked) == 0) {
+        if (repository.setRowChecked(listId, itemId, memberId, checked) == 0) {
             throw new NotFoundException("Article absent de la liste.");
         }
         return get(listId);
@@ -112,12 +127,14 @@ public class ShoppingService {
 
     /** Adds the recipe's ingredients, scaled to {@code servings}, as lines tied to this recipe entry. */
     @Transactional
-    public ShoppingList addRecipe(long listId, long recipeId, int servings) {
+    @WithSpan
+    public ShoppingList addRecipe(@SpanAttribute("familyhub.shopping.list_id") long listId,
+            @SpanAttribute("familyhub.recipe.id") long recipeId, int servings) {
         requireOpen(listId);
         List<RecipeIngredient> ingredients = recipes.ingredientsFor(recipeId, servings);
         long entryId = repository.insertRecipe(listId, recipeId, servings);
         for (RecipeIngredient ingredient : ingredients) {
-            repository.insertLine(listId, ingredient.itemId(), entryId, ingredient.quantity(), null);
+            repository.insertLine(listId, ingredient.itemId(), entryId, null, ingredient.quantity(), null);
         }
         return get(listId);
     }
@@ -132,17 +149,26 @@ public class ShoppingService {
     }
 
     /**
-     * Closes the list with the amount actually paid and publishes {@link ShoppingListCompleted}, whose
-     * listeners run in this transaction: the list and its consequences are saved together.
+     * Closes the list with what was paid in each kind of shop and publishes {@link ShoppingListCompleted},
+     * whose listeners run in this transaction: the list and its consequences are saved together.
      */
     @Transactional
-    public ShoppingList complete(long listId, long amountPaidCents, LocalDate paidOn, Long accountId) {
+    @WithSpan
+    public ShoppingList complete(@SpanAttribute("familyhub.shopping.list_id") long listId,
+            List<ShoppingPayment> payments, @Nullable LocalDate paidOn, @Nullable Long accountId) {
         requireOpen(listId);
+        if (payments.isEmpty()) {
+            throw new InvalidRequestException("Indiquez au moins un montant payé.");
+        }
+        if (payments.stream().map(ShoppingPayment::storeType).distinct().count() != payments.size()) {
+            throw new InvalidRequestException("Un seul montant par type de magasin.");
+        }
         LocalDate day = paidOn == null ? LocalDate.now(clock) : paidOn;
-        repository.complete(listId, day, amountPaidCents);
+        repository.complete(listId, day, payments.stream().mapToLong(ShoppingPayment::amountCents).sum());
         ShoppingList list = get(listId);
-        events.publishEvent(new ShoppingListCompleted(listId, list.name(), day, amountPaidCents, accountId,
-                ShoppingRows.mainStoreType(list.rows())));
+        events.publishEvent(new ShoppingListCompleted(listId, list.name(), day, accountId, List.copyOf(payments)));
+        LOG.atInfo().addKeyValue("shopping.list_id", listId).addKeyValue("shopping.payments", payments.size())
+                .log("Shopping list completed");
         return list;
     }
 
@@ -164,7 +190,7 @@ public class ShoppingService {
         }
     }
 
-    private static String blankToNull(String value) {
+    private static @Nullable String blankToNull(@Nullable String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
 }

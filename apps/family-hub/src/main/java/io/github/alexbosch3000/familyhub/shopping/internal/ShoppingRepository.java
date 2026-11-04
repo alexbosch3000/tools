@@ -10,9 +10,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -25,8 +25,8 @@ public class ShoppingRepository {
     }
 
     /** Stored columns of a list, without its lines. */
-    public record ListRow(long id, String name, ShoppingStatus status, LocalDate plannedFor, LocalDate completedOn,
-            Long amountPaidCents) {
+    public record ListRow(long id, String name, ShoppingStatus status, @Nullable LocalDate plannedFor,
+            @Nullable LocalDate completedOn, @Nullable Long amountPaidCents) {
     }
 
     public Optional<ListRow> findList(long id) {
@@ -37,7 +37,12 @@ public class ShoppingRepository {
                 .optional();
     }
 
-    /** Open lists by planned date, then the most recently completed ones. */
+    public long countOpen() {
+        Long count = jdbc.sql("SELECT COUNT(*) FROM shopping_list WHERE status = 'OPEN'").query(Long.class).single();
+        return count == null ? 0 : count;
+    }
+
+    /** Open lists by planned date, or the most recently completed ones. */
     public List<Long> findListIds(ShoppingStatus status, int doneLimit) {
         if (status == ShoppingStatus.OPEN) {
             return jdbc.sql("""
@@ -49,14 +54,14 @@ public class ShoppingRepository {
                 .param(doneLimit).query(Long.class).list();
     }
 
-    public long insertList(String name, LocalDate plannedFor, LocalDateTime now) {
-        KeyHolder keys = new GeneratedKeyHolder();
+    public long insertList(String name, @Nullable LocalDate plannedFor, LocalDateTime now) {
+        GeneratedKeyHolder keys = new GeneratedKeyHolder();
         jdbc.sql("INSERT INTO shopping_list (name, status, planned_for, created_at) VALUES (?, 'OPEN', ?, ?)")
                 .params(name.trim(), Db.text(plannedFor), Db.text(now)).update(keys);
-        return keys.getKey().longValue();
+        return Db.key(keys);
     }
 
-    public void updateList(long id, String name, LocalDate plannedFor) {
+    public void updateList(long id, String name, @Nullable LocalDate plannedFor) {
         jdbc.sql("UPDATE shopping_list SET name = ?, planned_for = ? WHERE id = ?")
                 .params(name.trim(), Db.text(plannedFor), id).update();
     }
@@ -73,28 +78,30 @@ public class ShoppingRepository {
     public List<ShoppingLine> findLines(long listId) {
         return jdbc.sql("SELECT * FROM shopping_line WHERE list_id = ? ORDER BY id").param(listId)
                 .query((rs, n) -> new ShoppingLine(rs.getLong("id"), rs.getLong("item_id"),
-                        Db.nullableLong(rs, "recipe_entry_id"),
+                        Db.nullableLong(rs, "recipe_entry_id"), Db.nullableLong(rs, "member_id"),
                         new Quantity(rs.getDouble("quantity"), Unit.valueOf(rs.getString("unit"))),
                         rs.getBoolean("checked"), rs.getString("note")))
                 .list();
     }
 
-    public void insertLine(long listId, long itemId, Long recipeEntryId, Quantity quantity, String note) {
+    public void insertLine(long listId, long itemId, @Nullable Long recipeEntryId, @Nullable Long memberId,
+            Quantity quantity, @Nullable String note) {
         jdbc.sql("""
-                INSERT INTO shopping_line (list_id, item_id, recipe_entry_id, quantity, unit, note)
-                VALUES (?, ?, ?, ?, ?, ?)""")
-                .params(listId, itemId, recipeEntryId, quantity.amount(), quantity.unit().name(), note)
+                INSERT INTO shopping_line (list_id, item_id, recipe_entry_id, member_id, quantity, unit, note)
+                VALUES (?, ?, ?, ?, ?, ?, ?)""")
+                .params(listId, itemId, recipeEntryId, memberId, quantity.amount(), quantity.unit().name(), note)
                 .update();
     }
 
-    public int deleteItemLines(long listId, long itemId) {
-        return jdbc.sql("DELETE FROM shopping_line WHERE list_id = ? AND item_id = ?").params(listId, itemId)
-                .update();
+    /** Deletes the lines of a row: an item for a member, or for the household when memberId is null. */
+    public int deleteRowLines(long listId, long itemId, @Nullable Long memberId) {
+        return jdbc.sql("DELETE FROM shopping_line WHERE list_id = ? AND item_id = ? AND member_id IS ?")
+                .params(listId, itemId, memberId).update();
     }
 
-    public int setChecked(long listId, long itemId, boolean checked) {
-        return jdbc.sql("UPDATE shopping_line SET checked = ? WHERE list_id = ? AND item_id = ?")
-                .params(checked, listId, itemId).update();
+    public int setRowChecked(long listId, long itemId, @Nullable Long memberId, boolean checked) {
+        return jdbc.sql("UPDATE shopping_line SET checked = ? WHERE list_id = ? AND item_id = ? AND member_id IS ?")
+                .params(checked, listId, itemId, memberId).update();
     }
 
     public List<ListedRecipe> findRecipes(long listId) {
@@ -109,10 +116,10 @@ public class ShoppingRepository {
     }
 
     public long insertRecipe(long listId, long recipeId, int servings) {
-        KeyHolder keys = new GeneratedKeyHolder();
+        GeneratedKeyHolder keys = new GeneratedKeyHolder();
         jdbc.sql("INSERT INTO shopping_list_recipe (list_id, recipe_id, servings) VALUES (?, ?, ?)")
                 .params(listId, recipeId, servings).update(keys);
-        return keys.getKey().longValue();
+        return Db.key(keys);
     }
 
     /** Deletes a recipe entry; its lines go with it (ON DELETE CASCADE). */

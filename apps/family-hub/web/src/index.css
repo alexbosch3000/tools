@@ -1,14 +1,94 @@
-/* Tailwind layers plus a few shared component classes. */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind CSS and the design tokens of the app; colours follow the system light or dark preference. */
+@import "tailwindcss";
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-soft: var(--chart-soft);
+  --color-chart-track: var(--chart-track);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Chart colours are the validated default palette (blue and orange series, one-hue blue ramp). */
+:root {
+  color-scheme: light;
+  --canvas: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --ink: #0f172a;
+  --ink-2: #475569;
+  --ink-3: #64748b;
+  --line: #e2e8f0;
+  --accent: #4f46e5;
+  --accent-ink: #ffffff;
+  --accent-soft: #eef2ff;
+  --danger: #b91c1c;
+  --danger-soft: #fef2f2;
+  --success: #047857;
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-soft: #86b6ef;
+  --chart-track: #cde2fb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --canvas: #0b1120;
+    --surface: #111827;
+    --surface-2: #1e293b;
+    --ink: #f1f5f9;
+    --ink-2: #cbd5e1;
+    --ink-3: #94a3b8;
+    --line: #273449;
+    --accent: #a5b4fc;
+    --accent-ink: #1e1b4b;
+    --accent-soft: #1e1b4b;
+    --danger: #fca5a5;
+    --danger-soft: #450a0a;
+    --success: #6ee7b7;
+    --chart-1: #3987e5;
+    --chart-2: #d95926;
+    --chart-soft: #1c5cab;
+    --chart-track: #0d366b;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-canvas text-ink antialiased;
+  }
+  dialog::backdrop {
+    background: rgb(15 23 42 / 0.5);
+  }
+}
 
 @layer components {
   .input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm
-      focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:bg-slate-100;
+    @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm placeholder:text-ink-3
+      focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-60;
   }
   .card {
-    @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm;
+    @apply rounded-xl border border-line bg-surface p-4 shadow-sm;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    transition: none !important;
+    animation: none !important;
   }
 }

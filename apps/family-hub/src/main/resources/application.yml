@@ -3,6 +3,8 @@
 app:
   data-dir: ${APP_DATA_DIR:./data}
   time-zone: ${APP_TIME_ZONE:Europe/Paris}
+  # Origins of a UI served elsewhere, e.g. https://alexbosch3000.github.io; empty: same origin only.
+  allowed-origins: ${APP_ALLOWED_ORIGINS:}
 
 spring:
   application:
@@ -14,6 +16,10 @@ spring:
       maximum-pool-size: 1
   lifecycle:
     timeout-per-shutdown-phase: 30s
+  # Blocking I/O (JDBC, HTTP) on virtual threads: no thread pool to size.
+  threads:
+    virtual:
+      enabled: true
   jackson:
     deserialization:
       # Jackson 3 rejects absent primitive fields by default; an absent boolean means false.
@@ -33,20 +39,12 @@ server:
   shutdown: graceful
   # Honour X-Forwarded-* headers from a reverse proxy terminating HTTPS.
   forward-headers-strategy: framework
-  servlet:
-    session:
-      timeout: 30d
-      cookie:
-        name: FAMILYHUB_SESSION
-        http-only: true
-        same-site: lax
-        secure: ${APP_COOKIE_SECURE:false}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,prometheus
+        include: health,info,prometheus
   endpoint:
     health:
       probes:
@@ -55,8 +53,29 @@ management:
         liveness:
           additional-path: server:/healthz
         readiness:
-          include: readinessState,db
+          # Not ready when the database or the disk holding it cannot take writes.
+          include: readinessState,db,diskSpace
           additional-path: server:/readyz
+  health:
+    diskspace:
+      path: ${app.data-dir}
+      threshold: 50MB
+  info:
+    java:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      # Latency histograms, so that dashboards and alerts can compute percentiles.
+      percentiles-histogram:
+        http.server.requests: true
+
+springdoc:
+  # Stable key order keeps the committed contract (web/src/api/openapi.json) diff-friendly.
+  writer-with-order-by-keys: true
+  default-produces-media-type: application/json
+  show-actuator: false
 
 logging:
   structured:

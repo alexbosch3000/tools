@@ -19,6 +19,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.util.HashSet;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,17 +43,17 @@ class RecipeController {
     }
 
     record IngredientRequest(@NotNull Long itemId, @Positive double quantity, @NotNull Unit unit,
-            @Size(max = 120) String note) {
+            @Nullable @Size(max = 120) String note) {
     }
 
     record RecipeRequest(
             @NotBlank @Size(max = 120) String name,
             @Min(1) @Max(50) int servings,
-            @PositiveOrZero Integer prepMinutes,
-            @PositiveOrZero Integer cookMinutes,
-            @Size(max = 20_000) String instructions,
-            @Size(max = 20) List<@Size(max = 30) String> tags,
-            @Size(max = 500) String sourceUrl,
+            @Nullable @PositiveOrZero Integer prepMinutes,
+            @Nullable @PositiveOrZero Integer cookMinutes,
+            @Nullable @Size(max = 20_000) String instructions,
+            @Nullable @Size(max = 20) List<@Size(max = 30) String> tags,
+            @Nullable @Size(max = 500) String sourceUrl,
             @NotNull @Size(max = 100) List<@Valid IngredientRequest> ingredients) {
 
         RecipeData toData() {
@@ -64,13 +65,13 @@ class RecipeController {
     }
 
     @GetMapping
-    List<RecipeSummary> list(@RequestParam(required = false) String q) {
+    List<RecipeSummary> list(@RequestParam(required = false) @Nullable String q) {
         return recipes.list(q);
     }
 
     /** With {@code servings}, quantities are scaled to that number of people. */
     @GetMapping("/{id}")
-    Recipe get(@PathVariable long id, @RequestParam(required = false) @Min(1) @Max(50) Integer servings) {
+    Recipe get(@PathVariable long id, @RequestParam(required = false) @Nullable @Min(1) @Max(50) Integer servings) {
         Recipe recipe = recipes.get(id);
         return servings == null ? recipe : recipe.scaledTo(servings);
     }

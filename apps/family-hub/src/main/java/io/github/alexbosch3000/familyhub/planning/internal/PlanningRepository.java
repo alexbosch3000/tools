@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -63,7 +64,7 @@ public class PlanningRepository {
                     :days, :until, :category, :cost, :shoppingListId, :recipeId, :servings, :action, :done, :now)""")
                 .params(params(entry)).param("now", Db.text(now))
                 .update(keys);
-        long id = keys.getKey().longValue();
+        long id = Db.key(keys);
         replaceChildren(id, entry);
         return id;
     }
@@ -161,9 +162,10 @@ public class PlanningRepository {
     }
 
     /** A planning_entry row before its children are attached. */
-    private record Row(long id, String title, String description, String location, EntryType type,
-            LocalDateTime start, LocalDateTime end, boolean allDay, Recurrence recurrence, EventCategory category,
-            Long cost, Long shoppingListId, Long recipeId, Integer servings, AccountingAction action, boolean done) {
+    private record Row(long id, String title, String description, @Nullable String location, EntryType type,
+            LocalDateTime start, LocalDateTime end, boolean allDay, @Nullable Recurrence recurrence,
+            @Nullable EventCategory category, @Nullable Long cost, @Nullable Long shoppingListId,
+            @Nullable Long recipeId, @Nullable Integer servings, @Nullable AccountingAction action, boolean done) {
 
         static Row map(ResultSet rs, int n) throws SQLException {
             String frequency = rs.getString("recurrence_frequency");

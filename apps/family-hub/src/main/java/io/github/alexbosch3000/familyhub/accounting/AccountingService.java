@@ -1,6 +1,7 @@
 // Public API of the accounting module: accounts, envelopes, transactions and their approval, reports.
 package io.github.alexbosch3000.familyhub.accounting;
 
+import io.github.alexbosch3000.familyhub.accounting.internal.AccountingMetrics;
 import io.github.alexbosch3000.familyhub.accounting.internal.AccountingRepository;
 import io.github.alexbosch3000.familyhub.accounting.internal.AccountingRepository.TransactionRow;
 import io.github.alexbosch3000.familyhub.accounting.internal.RecurringSchedule;
@@ -9,6 +10,8 @@ import io.github.alexbosch3000.familyhub.family.MemberService;
 import io.github.alexbosch3000.familyhub.shared.ConflictException;
 import io.github.alexbosch3000.familyhub.shared.InvalidRequestException;
 import io.github.alexbosch3000.familyhub.shared.NotFoundException;
+import io.opentelemetry.instrumentation.annotations.SpanAttribute;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.text.Normalizer;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -16,35 +19,44 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AccountingService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AccountingService.class);
     private static final int UPCOMING_DAYS = 30;
     private static final int UPCOMING_SHOWN = 5;
 
     private final AccountingRepository repository;
     private final MemberService members;
+    private final AccountingMetrics metrics;
     private final Clock clock;
 
-    AccountingService(AccountingRepository repository, MemberService members, Clock clock) {
+    AccountingService(AccountingRepository repository, MemberService members, AccountingMetrics metrics,
+            Clock clock) {
         this.repository = repository;
         this.members = members;
+        this.metrics = metrics;
         this.clock = clock;
     }
 
-    public record TransactionData(LocalDate day, String label, long amountCents, String categoryCode, Long accountId,
-            String supplier, TransactionStatus status) {
+    public record TransactionData(LocalDate day, String label, long amountCents, String categoryCode,
+            @Nullable Long accountId, @Nullable String supplier, @Nullable TransactionStatus status) {
     }
 
     /** Corrections applied when approving; null fields keep the current values. */
-    public record Approval(Long amountCents, LocalDate day, String categoryCode, Long accountId) {
+    public record Approval(@Nullable Long amountCents, @Nullable LocalDate day, @Nullable String categoryCode,
+            @Nullable Long accountId) {
     }
 
-    public record RecurringData(String label, String categoryCode, String supplier, long amountCents, Period period,
-            int dayOfMonth, LocalDate startDate, LocalDate endDate, Long accountId, boolean active) {
+    public record RecurringData(String label, String categoryCode, @Nullable String supplier, long amountCents,
+            Period period, int dayOfMonth, LocalDate startDate, @Nullable LocalDate endDate, @Nullable Long accountId,
+            boolean active) {
     }
 
     // Accounts
@@ -82,7 +94,8 @@ public class AccountingService {
     }
 
     @Transactional
-    public Category createCategory(String name, Direction direction, BudgetGroup group, Long monthlyBudgetCents) {
+    public Category createCategory(String name, Direction direction, @Nullable BudgetGroup group,
+            @Nullable Long monthlyBudgetCents) {
         validateGroup(direction, group);
         List<Category> existing = categories();
         String code = uniqueCode(slug(name), existing);
@@ -93,7 +106,8 @@ public class AccountingService {
     }
 
     @Transactional
-    public Category updateCategory(String code, String name, BudgetGroup group, Long monthlyBudgetCents) {
+    public Category updateCategory(String code, String name, @Nullable BudgetGroup group,
+            @Nullable Long monthlyBudgetCents) {
         Category current = category(code);
         validateGroup(current.direction(), group);
         repository.updateCategory(code, name.trim(), group,
@@ -149,7 +163,8 @@ public class AccountingService {
 
     /** Approves a planned or pending transaction, optionally correcting it with the actual values. */
     @Transactional
-    public Transaction approve(long id, Approval approval) {
+    @WithSpan
+    public Transaction approve(@SpanAttribute("familyhub.transaction.id") long id, Approval approval) {
         Transaction current = transaction(id);
         if (current.status() == TransactionStatus.APPROVED) {
             throw new ConflictException("Cette opération est déjà approuvée.");
@@ -160,7 +175,11 @@ public class AccountingService {
         repository.updateTransaction(id, approval.day() != null ? approval.day() : current.day(), current.label(),
                 approval.amountCents() != null ? approval.amountCents() : current.amountCents(), category, account,
                 current.supplier());
-        repository.approve(id, members.currentMemberId().orElse(null), LocalDateTime.now(clock));
+        Long approver = members.currentMemberId().orElse(null);
+        repository.approve(id, approver, LocalDateTime.now(clock));
+        metrics.approved();
+        LOG.atInfo().addKeyValue("transaction.id", id).addKeyValue("member.id", approver)
+                .log("Transaction approved");
         return transaction(id);
     }
 
@@ -203,6 +222,7 @@ public class AccountingService {
 
     /** Plans the transactions falling due in a month; idempotent. Returns how many were created. */
     @Transactional
+    @WithSpan
     public int generate(YearMonth month) {
         int created = 0;
         for (RecurringTransaction r : repository.findRecurring()) {
@@ -213,6 +233,7 @@ public class AccountingService {
 
     // Reports
 
+    @WithSpan
     public MonthlyReport monthlyReport(YearMonth month) {
         return ReportCalculator.monthly(month, categories(), transactions(month));
     }
@@ -264,7 +285,7 @@ public class AccountingService {
         return repository.findRecurring(id).orElseThrow(() -> new NotFoundException("Échéance introuvable."));
     }
 
-    private void validateReferences(String categoryCode, Long accountId) {
+    private void validateReferences(String categoryCode, @Nullable Long accountId) {
         category(categoryCode);
         if (accountId != null) {
             account(accountId);
@@ -278,7 +299,7 @@ public class AccountingService {
         }
     }
 
-    private static void validateGroup(Direction direction, BudgetGroup group) {
+    private static void validateGroup(Direction direction, @Nullable BudgetGroup group) {
         if ((direction == Direction.EXPENSE) != (group != null)) {
             throw new InvalidRequestException(
                     "Une dépense a un groupe (besoins, envies, épargne), un revenu n'en a pas.");
@@ -309,7 +330,7 @@ public class AccountingService {
         return existing.stream().anyMatch(c -> c.code().equals(code));
     }
 
-    private static String blankToNull(String value) {
+    private static @Nullable String blankToNull(@Nullable String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
 }

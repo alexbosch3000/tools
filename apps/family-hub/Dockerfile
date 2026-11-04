@@ -26,13 +26,25 @@ RUN apk upgrade --no-cache \
     && adduser -S -u 10001 -G familyhub familyhub \
     && mkdir /data && chown 10001:familyhub /data
 COPY --from=build /build/target/family-hub.jar /app/family-hub.jar
-# Loaded only when JAVA_TOOL_OPTIONS=-javaagent:/otel/opentelemetry-javaagent.jar is set.
 COPY --from=build /build/target/otel/opentelemetry-javaagent.jar /otel/opentelemetry-javaagent.jar
+COPY --chmod=755 docker-entrypoint.sh /app/docker-entrypoint.sh
+# Version of the image (the CI passes sha-<commit>), reported as service.version in every signal.
+ARG VERSION=dev
 ENV HOME=/tmp \
-    APP_DATA_DIR=/data
+    APP_DATA_DIR=/data \
+    OTEL_SERVICE_NAME=family-hub \
+    OTEL_RESOURCE_ATTRIBUTES=service.namespace=tools,service.version=${VERSION} \
+    OTEL_JAVAAGENT_LOGGING=application \
+    OTEL_INSTRUMENTATION_MICROMETER_ENABLED=true \
+    OTEL_INSTRUMENTATION_LOGBACK_APPENDER_EXPERIMENTAL_CAPTURE_KEY_VALUE_PAIR_ATTRIBUTES=true \
+    OTEL_INSTRUMENTATION_COMMON_LOGGING_TRACE_ID=trace.id \
+    OTEL_INSTRUMENTATION_COMMON_LOGGING_SPAN_ID=span.id \
+    OTEL_INSTRUMENTATION_COMMON_LOGGING_TRACE_FLAGS=trace.flags
 WORKDIR /app
 USER 10001
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD wget -q --spider http://127.0.0.1:8080/healthz || exit 1
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/family-hub.jar"]
+# Telemetry is configured with the standard OTEL_* variables; setting OTEL_EXPORTER_OTLP_ENDPOINT
+# attaches the agent, which exports traces, logs and metrics over OTLP.
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

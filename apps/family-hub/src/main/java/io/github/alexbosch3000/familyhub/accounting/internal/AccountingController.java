@@ -26,6 +26,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,26 +52,27 @@ class AccountingController {
     record AccountRequest(@NotBlank @Size(max = 60) String name, @NotNull AccountKind kind, long openingBalanceCents) {
     }
 
-    record CategoryRequest(@NotBlank @Size(max = 60) String name, Direction direction, BudgetGroup group,
-            @PositiveOrZero Long monthlyBudgetCents) {
+    record CategoryRequest(@NotBlank @Size(max = 60) String name, @Nullable Direction direction,
+            @Nullable BudgetGroup group, @Nullable @PositiveOrZero Long monthlyBudgetCents) {
     }
 
     record TransactionRequest(@NotNull LocalDate day, @NotBlank @Size(max = 120) String label,
-            @PositiveOrZero long amountCents, @NotBlank String categoryCode, Long accountId,
-            @Size(max = 80) String supplier, TransactionStatus status) {
+            @PositiveOrZero long amountCents, @NotBlank String categoryCode, @Nullable Long accountId,
+            @Nullable @Size(max = 80) String supplier, @Nullable TransactionStatus status) {
 
         TransactionData toData() {
             return new TransactionData(day, label, amountCents, categoryCode, accountId, supplier, status);
         }
     }
 
-    record ApprovalRequest(@PositiveOrZero Long amountCents, LocalDate day, String categoryCode, Long accountId) {
+    record ApprovalRequest(@Nullable @PositiveOrZero Long amountCents, @Nullable LocalDate day,
+            @Nullable String categoryCode, @Nullable Long accountId) {
     }
 
     record RecurringRequest(@NotBlank @Size(max = 120) String label, @NotBlank String categoryCode,
-            @Size(max = 80) String supplier, @PositiveOrZero long amountCents, @NotNull Period period,
-            @Min(1) @Max(31) int dayOfMonth, @NotNull LocalDate startDate, LocalDate endDate, Long accountId,
-            boolean active) {
+            @Nullable @Size(max = 80) String supplier, @PositiveOrZero long amountCents, @NotNull Period period,
+            @Min(1) @Max(31) int dayOfMonth, @NotNull LocalDate startDate, @Nullable LocalDate endDate,
+            @Nullable Long accountId, boolean active) {
 
         RecurringData toData() {
             return new RecurringData(label, categoryCode, supplier, amountCents, period, dayOfMonth, startDate, endDate,

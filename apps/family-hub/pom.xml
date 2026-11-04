@@ -26,7 +26,9 @@
     <!-- Versions not managed by Spring Boot (pinned for reproducible, auditable builds) -->
     <sqlite-jdbc.version>3.54.1.0</sqlite-jdbc.version>
     <spring-modulith.version>2.1.2</spring-modulith.version>
-    <opentelemetry-javaagent.version>2.33.1</opentelemetry-javaagent.version>
+    <springdoc.version>3.2.0</springdoc.version>
+    <!-- Agent and annotations are released together. -->
+    <opentelemetry-instrumentation.version>2.33.1</opentelemetry-instrumentation.version>
 
     <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
     <ossindex.plugin.version>3.2.0</ossindex.plugin.version>
@@ -73,20 +75,33 @@
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
     </dependency>
+    <!-- OpenAPI description at /v3/api-docs: the contract the TypeScript client is generated from. -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
+      <version>${springdoc.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.xerial</groupId>
       <artifactId>sqlite-jdbc</artifactId>
       <version>${sqlite-jdbc.version}</version>
     </dependency>
 
+    <!-- @WithSpan on business operations: no-op without the agent, spans with it. -->
+    <dependency>
+      <groupId>io.opentelemetry.instrumentation</groupId>
+      <artifactId>opentelemetry-instrumentation-annotations</artifactId>
+      <version>${opentelemetry-instrumentation.version}</version>
+    </dependency>
+
     <!--
-      Shipped next to the jar in the image (see Dockerfile), never inside it: tracing is
-      enabled at runtime with JAVA_TOOL_OPTIONS=-javaagent:/otel/opentelemetry-javaagent.jar.
+      Shipped next to the jar in the image (see Dockerfile), never inside it: the entrypoint attaches
+      it when an OTLP endpoint is configured.
     -->
     <dependency>
       <groupId>io.opentelemetry.javaagent</groupId>
       <artifactId>opentelemetry-javaagent</artifactId>
-      <version>${opentelemetry-javaagent.version}</version>
+      <version>${opentelemetry-instrumentation.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -125,6 +140,14 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <executions>
+          <!-- META-INF/build-info.properties: version shown by /actuator/info. -->
+          <execution>
+            <goals>
+              <goal>build-info</goal>
+            </goals>
+          </execution>
+        </executions>
         <configuration>
           <!-- Spring Boot packages provided dependencies too; the agent must stay outside the jar. -->
           <excludes>

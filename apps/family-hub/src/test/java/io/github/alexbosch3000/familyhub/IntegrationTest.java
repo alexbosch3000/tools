@@ -1,7 +1,6 @@
 // Base class of the HTTP-level tests: full application on a temporary SQLite file, fixed clock, MockMvc helpers.
 package io.github.alexbosch3000.familyhub;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -14,19 +13,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.allowed-origins=https://alexbosch3000.github.io")
 @AutoConfigureMockMvc
 @Import(FixedClockConfig.class)
 public abstract class IntegrationTest {
@@ -52,55 +52,55 @@ public abstract class IntegrationTest {
         }
     }
 
-    /** Creates the first parent if needed and returns a session logged in as that parent. */
-    protected MockHttpSession parentSession() throws Exception {
-        MockHttpSession session = new MockHttpSession();
+    /** Creates the first parent if needed and returns an access token of that parent. */
+    protected String parentToken() throws Exception {
         String state = mvc.perform(get("/api/session")).andReturn().getResponse().getContentAsString();
         if (JsonPath.<Boolean>read(state, "$.setupRequired")) {
-            send(session, post("/api/setup"), """
-                    {"name":"Alex","color":"#2563eb","username":"alex","password":"correct-horse"}""");
-        } else {
-            send(session, post("/api/auth/login"), """
-                    {"username":"alex","password":"correct-horse"}""");
+            return read(send(null, post("/api/setup"), """
+                    {"name":"Alex","color":"#2563eb","username":"alex","password":"correct-horse"}"""), "$.token");
         }
-        return session;
+        return login("alex", "correct-horse");
     }
 
-    /** Creates a child with a login (once) and returns a session logged in as that child. */
-    protected MockHttpSession childSession() throws Exception {
-        MockHttpSession parent = parentSession();
-        String members = mvc.perform(get("/api/members").session(parent)).andReturn().getResponse()
-                .getContentAsString();
-        if (JsonPath.<java.util.List<?>>read(members, "$[?(@.username == 'sam')]").isEmpty()) {
+    /** Creates a child with a login (once) and returns an access token of that child. */
+    protected String childToken() throws Exception {
+        String parent = parentToken();
+        String members = getJson(parent, "/api/members").andReturn().getResponse().getContentAsString();
+        if (JsonPath.<List<?>>read(members, "$[?(@.username == 'sam')]").isEmpty()) {
             send(parent, post("/api/members"), """
-                    {"name":"Sam","color":"#16a34a","role":"CHILD","username":"sam","password":"child-password"}""");
+                    {"name":"Sam","color":"#16a34a","role":"CHILD","username":"sam","password":"child-password",
+                     "clothingSize":"10 ans","shoeSize":"33"}""");
         }
-        MockHttpSession session = new MockHttpSession();
-        send(session, post("/api/auth/login"), """
-                {"username":"sam","password":"child-password"}""");
-        return session;
+        return login("sam", "child-password");
     }
 
-    protected ResultActions send(MockHttpSession session, MockHttpServletRequestBuilder request, String json)
-            throws Exception {
-        return mvc.perform(request.session(session).with(csrf())
-                .contentType(MediaType.APPLICATION_JSON).content(json));
+    protected String login(String username, String password) throws Exception {
+        return read(send(null, post("/api/auth/login"), """
+                {"username":"%s","password":"%s"}""".formatted(username, password)), "$.token");
     }
 
-    protected ResultActions getJson(MockHttpSession session, String url, Object... vars) throws Exception {
-        return mvc.perform(get(url, vars).session(session));
+    protected ResultActions send(String token, MockHttpServletRequestBuilder request, String json) throws Exception {
+        return mvc.perform(authorized(request, token).contentType(MediaType.APPLICATION_JSON).content(json));
     }
 
-    protected ResultActions postJson(MockHttpSession session, String url, String json) throws Exception {
-        return send(session, post(url), json);
+    protected ResultActions getJson(String token, String url, Object... vars) throws Exception {
+        return mvc.perform(authorized(get(url, vars), token));
     }
 
-    protected ResultActions putJson(MockHttpSession session, String url, String json) throws Exception {
-        return send(session, put(url), json);
+    protected ResultActions postJson(String token, String url, String json) throws Exception {
+        return send(token, post(url), json);
     }
 
-    protected ResultActions deleteJson(MockHttpSession session, String url) throws Exception {
-        return mvc.perform(delete(url).session(session).with(csrf()));
+    protected ResultActions putJson(String token, String url, String json) throws Exception {
+        return send(token, put(url), json);
+    }
+
+    protected ResultActions deleteJson(String token, String url) throws Exception {
+        return mvc.perform(authorized(delete(url), token));
+    }
+
+    private static MockHttpServletRequestBuilder authorized(MockHttpServletRequestBuilder request, String token) {
+        return token == null ? request : request.header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
     }
 
     /** Reads the numeric id of a JSON response body. */

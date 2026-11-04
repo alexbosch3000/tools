@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,14 +33,15 @@ public class RecipeService {
         this.clock = clock;
     }
 
-    public record IngredientData(long itemId, Quantity quantity, String note) {
+    public record IngredientData(long itemId, Quantity quantity, @Nullable String note) {
     }
 
-    public record RecipeData(String name, int servings, Integer prepMinutes, Integer cookMinutes,
-            String instructions, List<String> tags, String sourceUrl, List<IngredientData> ingredients) {
+    public record RecipeData(String name, int servings, @Nullable Integer prepMinutes, @Nullable Integer cookMinutes,
+            @Nullable String instructions, @Nullable List<String> tags, @Nullable String sourceUrl,
+            List<IngredientData> ingredients) {
     }
 
-    public List<RecipeSummary> list(String query) {
+    public List<RecipeSummary> list(@Nullable String query) {
         return repository.findSummaries(query);
     }
 

@@ -7,6 +7,7 @@ public enum StoreType {
     BAKERY,
     BUTCHER,
     PHARMACY,
+    CLOTHING,
     DIY,
     GARDEN,
     ONLINE,

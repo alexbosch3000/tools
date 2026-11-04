@@ -1,4 +1,5 @@
--- Things that can be bought. Items of kind INGREDIENT can also be used in recipes.
+-- Things that can be bought: food, household, DIY, garden, clothing. Items of kind INGREDIENT can
+-- also be used in recipes.
 CREATE TABLE item (
     id               INTEGER PRIMARY KEY,
     name             TEXT    NOT NULL UNIQUE COLLATE NOCASE,
@@ -70,4 +71,19 @@ INSERT INTO item (name, kind, store_type, aisle, unit, unit_price_cents) VALUES
     ('Terreau', 'GOODS', 'GARDEN', 'GARDEN_SUPPLIES', 'L', 15),
     ('Engrais', 'GOODS', 'GARDEN', 'GARDEN_SUPPLIES', 'PACK', 900),
     ('Graines de tomates', 'GOODS', 'GARDEN', 'PLANTS', 'PACK', 300),
-    ('Plants d''aromatiques', 'GOODS', 'GARDEN', 'PLANTS', 'PIECE', 350);
+    ('Plants d''aromatiques', 'GOODS', 'GARDEN', 'PLANTS', 'PIECE', 350),
+    ('T-shirt', 'GOODS', 'CLOTHING', 'CLOTHES_CHILDREN', 'PIECE', 800),
+    ('Pantalon', 'GOODS', 'CLOTHING', 'CLOTHES_CHILDREN', 'PIECE', 2000),
+    ('Jean', 'GOODS', 'CLOTHING', 'CLOTHES_ADULTS', 'PIECE', 4000),
+    ('Pull', 'GOODS', 'CLOTHING', 'CLOTHES_ADULTS', 'PIECE', 3000),
+    ('Manteau', 'GOODS', 'CLOTHING', 'CLOTHES_ADULTS', 'PIECE', 7000),
+    ('Pyjama', 'GOODS', 'CLOTHING', 'CLOTHES_CHILDREN', 'PIECE', 1500),
+    ('Body bébé', 'GOODS', 'CLOTHING', 'CLOTHES_BABY', 'PACK', 1500),
+    ('Chaussettes', 'GOODS', 'CLOTHING', 'UNDERWEAR', 'PACK', 900),
+    ('Sous-vêtements', 'GOODS', 'CLOTHING', 'UNDERWEAR', 'PACK', 1500),
+    ('Chaussures', 'GOODS', 'CLOTHING', 'SHOES', 'PIECE', 4500),
+    ('Baskets', 'GOODS', 'CLOTHING', 'SHOES', 'PIECE', 5000),
+    ('Bottes de pluie', 'GOODS', 'CLOTHING', 'SHOES', 'PIECE', 2500),
+    ('Maillot de bain', 'GOODS', 'CLOTHING', 'SPORTSWEAR', 'PIECE', 1500),
+    ('Tenue de sport', 'GOODS', 'CLOTHING', 'SPORTSWEAR', 'PIECE', 2500),
+    ('Bonnet et gants', 'GOODS', 'CLOTHING', 'ACCESSORIES', 'PACK', 1500);

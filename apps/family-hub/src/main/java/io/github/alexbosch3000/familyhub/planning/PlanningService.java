@@ -5,12 +5,14 @@ import io.github.alexbosch3000.familyhub.family.Member;
 import io.github.alexbosch3000.familyhub.family.MemberService;
 import io.github.alexbosch3000.familyhub.planning.internal.FrenchHolidays;
 import io.github.alexbosch3000.familyhub.planning.internal.IcsCalendar;
+import io.github.alexbosch3000.familyhub.planning.internal.PlanningMetrics;
 import io.github.alexbosch3000.familyhub.planning.internal.PlanningRepository;
 import io.github.alexbosch3000.familyhub.planning.internal.RecurrenceExpander;
 import io.github.alexbosch3000.familyhub.recipes.RecipeService;
 import io.github.alexbosch3000.familyhub.shared.InvalidRequestException;
 import io.github.alexbosch3000.familyhub.shared.NotFoundException;
 import io.github.alexbosch3000.familyhub.shopping.ShoppingService;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -26,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,15 +44,17 @@ public class PlanningService {
     private final RecipeService recipes;
     private final MemberService members;
     private final ApplicationEventPublisher events;
+    private final PlanningMetrics metrics;
     private final Clock clock;
 
     PlanningService(PlanningRepository repository, ShoppingService shopping, RecipeService recipes,
-            MemberService members, ApplicationEventPublisher events, Clock clock) {
+            MemberService members, ApplicationEventPublisher events, PlanningMetrics metrics, Clock clock) {
         this.repository = repository;
         this.shopping = shopping;
         this.recipes = recipes;
         this.members = members;
         this.events = events;
+        this.metrics = metrics;
         this.clock = clock;
     }
 
@@ -58,10 +63,11 @@ public class PlanningService {
      *
      * @param createShoppingList SHOPPING only: create a list named after the entry instead of referencing one
      */
-    public record EntryData(String title, String description, String location, EntryType type,
-            LocalDateTime start, LocalDateTime end, boolean allDay, Recurrence recurrence, List<Long> memberIds,
-            EventCategory category, Long estimatedCostCents, Long shoppingListId, boolean createShoppingList,
-            Long recipeId, Integer servings, AccountingAction accountingAction) {
+    public record EntryData(String title, @Nullable String description, @Nullable String location, EntryType type,
+            LocalDateTime start, LocalDateTime end, boolean allDay, @Nullable Recurrence recurrence,
+            @Nullable List<Long> memberIds, @Nullable EventCategory category, @Nullable Long estimatedCostCents,
+            @Nullable Long shoppingListId, boolean createShoppingList, @Nullable Long recipeId,
+            @Nullable Integer servings, @Nullable AccountingAction accountingAction) {
     }
 
     /** Result of turning planned meals into a shopping list. */
@@ -69,6 +75,7 @@ public class PlanningService {
     }
 
     /** Occurrences overlapping {@code [from, to]}, chronologically. */
+    @WithSpan
     public List<Occurrence> occurrences(LocalDate from, LocalDate to) {
         if (to.isBefore(from) || ChronoUnit.DAYS.between(from, to) > MAX_RANGE_DAYS) {
             throw new InvalidRequestException("Période invalide (" + MAX_RANGE_DAYS + " jours au plus).");
@@ -90,6 +97,7 @@ public class PlanningService {
     public PlanningEntry create(EntryData data) {
         PlanningEntry entry = normalize(0, data, List.of(), false);
         long id = repository.insert(entry, LocalDateTime.now(clock));
+        metrics.created(entry.type());
         publishCost(get(id));
         return get(id);
     }
@@ -132,7 +140,9 @@ public class PlanningService {
      * meal's servings. Uses the given open list, or creates one.
      */
     @Transactional
-    public MealShopping prepareShopping(LocalDate from, LocalDate to, Long shoppingListId, String name) {
+    @WithSpan
+    public MealShopping prepareShopping(LocalDate from, LocalDate to, @Nullable Long shoppingListId,
+            @Nullable String name) {
         List<Occurrence> meals = occurrences(from, to).stream()
                 .filter(o -> o.entry().type() == EntryType.MEAL && o.entry().recipeId() != null)
                 .toList();
@@ -237,7 +247,7 @@ public class PlanningService {
         throw new InvalidRequestException("Choisissez ou créez une liste de courses.");
     }
 
-    private static Recurrence validRecurrence(Recurrence recurrence, LocalDateTime start) {
+    private static @Nullable Recurrence validRecurrence(@Nullable Recurrence recurrence, LocalDateTime start) {
         if (recurrence == null) {
             return null;
         }
@@ -257,7 +267,7 @@ public class PlanningService {
         return recurrence;
     }
 
-    private List<Long> validMembers(List<Long> ids) {
+    private List<Long> validMembers(@Nullable List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
@@ -269,7 +279,7 @@ public class PlanningService {
         return distinct;
     }
 
-    private static String blankToNull(String value) {
+    private static @Nullable String blankToNull(@Nullable String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
 }

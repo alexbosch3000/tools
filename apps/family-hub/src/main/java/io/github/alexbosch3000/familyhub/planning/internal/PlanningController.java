@@ -22,6 +22,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,27 +45,27 @@ class PlanningController {
         this.planning = planning;
     }
 
-    record RecurrenceRequest(@NotNull Frequency frequency, @Min(1) @Max(99) int interval, List<DayOfWeek> days,
-            LocalDate until) {
+    record RecurrenceRequest(@NotNull Frequency frequency, @Min(1) @Max(99) int interval,
+            @Nullable List<DayOfWeek> days, @Nullable LocalDate until) {
     }
 
     record EntryRequest(
             @NotBlank @Size(max = 120) String title,
-            @Size(max = 4000) String description,
-            @Size(max = 200) String location,
+            @Nullable @Size(max = 4000) String description,
+            @Nullable @Size(max = 200) String location,
             @NotNull EntryType type,
             @NotNull LocalDateTime start,
             @NotNull LocalDateTime end,
             boolean allDay,
-            @Valid RecurrenceRequest recurrence,
-            @Size(max = 20) List<Long> memberIds,
-            EventCategory category,
-            @PositiveOrZero Long estimatedCostCents,
-            Long shoppingListId,
+            @Nullable @Valid RecurrenceRequest recurrence,
+            @Nullable @Size(max = 20) List<Long> memberIds,
+            @Nullable EventCategory category,
+            @Nullable @PositiveOrZero Long estimatedCostCents,
+            @Nullable Long shoppingListId,
             boolean createShoppingList,
-            Long recipeId,
-            @Min(1) @Max(50) Integer servings,
-            AccountingAction accountingAction) {
+            @Nullable Long recipeId,
+            @Nullable @Min(1) @Max(50) Integer servings,
+            @Nullable AccountingAction accountingAction) {
 
         EntryData toData() {
             Recurrence rule = recurrence == null ? null
@@ -78,11 +79,11 @@ class PlanningController {
     record DayRequest(@NotNull LocalDate day) {
     }
 
-    record DoneRequest(boolean done) {
+    record EntryDoneRequest(boolean done) {
     }
 
-    record MealShoppingRequest(@NotNull LocalDate from, @NotNull LocalDate to, Long shoppingListId,
-            @Size(max = 80) String name) {
+    record MealShoppingRequest(@NotNull LocalDate from, @NotNull LocalDate to, @Nullable Long shoppingListId,
+            @Nullable @Size(max = 80) String name) {
     }
 
     record Holiday(LocalDate day, String name) {
@@ -121,7 +122,7 @@ class PlanningController {
     }
 
     @PutMapping("/entries/{id}/done")
-    PlanningEntry done(@PathVariable long id, @RequestBody DoneRequest request) {
+    PlanningEntry done(@PathVariable long id, @RequestBody EntryDoneRequest request) {
         return planning.setDone(id, request.done());
     }
 

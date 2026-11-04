@@ -3,6 +3,7 @@ package io.github.alexbosch3000.familyhub.accounting.internal;
 
 import io.github.alexbosch3000.familyhub.catalog.StoreType;
 import io.github.alexbosch3000.familyhub.planning.EventCategory;
+import org.jspecify.annotations.Nullable;
 
 final class CategoryMapping {
 
@@ -11,7 +12,7 @@ final class CategoryMapping {
     private CategoryMapping() {
     }
 
-    static String forEvent(EventCategory category) {
+    static String forEvent(@Nullable EventCategory category) {
         if (category == null) {
             return FALLBACK;
         }
@@ -31,12 +32,10 @@ final class CategoryMapping {
     }
 
     static String forStore(StoreType storeType) {
-        if (storeType == null) {
-            return "courses";
-        }
         return switch (storeType) {
             case SUPERMARKET, MARKET, BAKERY, BUTCHER -> "courses";
             case PHARMACY -> "sante";
+            case CLOTHING -> "vetements";
             case DIY, GARDEN -> "maison";
             case ONLINE, OTHER -> FALLBACK;
         };
