@@ -67,8 +67,8 @@ image-run: ## Run the container image with production-like hardening
 	docker run --rm -p $(PORT):8080 $(HARDENING) $(IMAGE)
 
 smoke: ## Check the hardened image starts, migrates its database and answers on /readyz and /healthz
-	@cid=$$(docker run -d --rm -p 127.0.0.1:$(SMOKE_PORT):8080 $(HARDENING) $(IMAGE)) && \
-	trap 'docker stop $$cid >/dev/null' EXIT && \
+	@cid=$$(docker run -d -p 127.0.0.1:$(SMOKE_PORT):8080 $(HARDENING) $(IMAGE)) && \
+	trap 'docker rm -f $$cid >/dev/null' EXIT && \
 	for i in $$(seq 1 30); do \
 	  curl -fsS http://127.0.0.1:$(SMOKE_PORT)/readyz >/dev/null 2>&1 && \
 	  curl -fsS http://127.0.0.1:$(SMOKE_PORT)/healthz && echo && exit 0; sleep 1; \
