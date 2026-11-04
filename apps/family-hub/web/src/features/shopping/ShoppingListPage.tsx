@@ -78,21 +78,45 @@ function AddRecipe({ list }: { list: Schemas['ShoppingList'] }) {
   const recipes = useQuery({ queryKey: ['recipes', ''], queryFn: () => unwrap(api().GET('/api/recipes')) })
   const [recipeId, setRecipeId] = useState('')
   const [servings, setServings] = useState('4')
+  const [skipped, setSkipped] = useState<Set<number>>(new Set())
+  const portions = Number(servings)
+  const validServings = Number.isInteger(portions) && portions >= 1 && portions <= 50
+  const detail = useQuery({ queryKey: ['recipes', 'detail', recipeId, portions], enabled: !!recipeId && validServings,
+    queryFn: () => unwrap(api().GET('/api/recipes/{id}', { params: { path: { id: Number(recipeId) }, query: { servings: portions } } })) })
   const add = useAction(() => unwrap(api().POST('/api/shopping/lists/{id}/recipes', { params: { path: { id: list.id } },
-    body: { recipeId: Number(recipeId), servings: Number(servings) } })), { refresh: [...AREAS], inline: true, onSuccess: () => setRecipeId('') })
+    body: { recipeId: Number(recipeId), servings: portions, skippedItemIds: [...skipped] } })),
+  { refresh: [...AREAS], inline: true, onSuccess: () => { setRecipeId(''); setSkipped(new Set()) } })
+  const toggle = (itemId: number) => setSkipped((previous) => {
+    const next = new Set(previous)
+    if (!next.delete(itemId)) next.add(itemId)
+    return next
+  })
   return (
     <form onSubmit={(e) => { e.preventDefault(); add.mutate(undefined) }} className="space-y-2">
       <Select options={Object.fromEntries((recipes.data ?? []).map((r) => [String(r.id), r.name]))} value={recipeId} placeholder="Choisir une recette"
         aria-label="Recette" onChange={(v) => {
           setRecipeId(v)
+          setSkipped(new Set())
           const recipe = recipes.data?.find((r) => String(r.id) === v)
           if (recipe) setServings(String(recipe.servings))
         }} />
       <div className="flex items-center gap-2">
         <input className="input w-20" type="number" min="1" max="50" value={servings} onChange={(e) => setServings(e.target.value)} aria-label="Portions" />
         <span className="text-sm text-ink-3">portions</span>
-        <Button type="submit" variant="primary" className="ml-auto" disabled={!recipeId || add.isPending}>Ajouter</Button>
+        <Button type="submit" variant="primary" className="ml-auto" disabled={!recipeId || !validServings || add.isPending}>Ajouter</Button>
       </div>
+      {detail.data && (
+        <fieldset className="space-y-1">
+          <legend className="text-xs text-ink-3">Décochez ce que vous avez déjà.</legend>
+          {detail.data.ingredients.map((ingredient) => (
+            <label key={ingredient.itemId} className="flex items-center gap-2 text-sm">
+              <input type="checkbox" className="h-4 w-4 accent-accent" checked={!skipped.has(ingredient.itemId)}
+                onChange={() => toggle(ingredient.itemId)} />
+              {ingredient.itemName} · {formatQuantity(ingredient.quantity)}
+            </label>
+          ))}
+        </fieldset>
+      )}
       <ErrorMessage error={add.error} />
     </form>
   )

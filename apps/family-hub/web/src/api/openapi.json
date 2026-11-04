@@ -2702,6 +2702,15 @@
             "format" : "int32",
             "maximum" : 50,
             "minimum" : 1
+          },
+          "skippedItemIds" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "maxItems" : 100,
+            "minItems" : 0
           }
         },
         "required" : [ "recipeId", "servings" ]

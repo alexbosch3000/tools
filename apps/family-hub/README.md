@@ -18,7 +18,7 @@ Family organizer shared by every member of the household: planning at minute pre
 | Planning | Week and month views, entries at the minute, all-day and multi-day entries, recurrence (daily, weekly on chosen days, monthly, yearly, every *n*), skipped occurrences, attendees, French public holidays, iCalendar subscription for phones |
 | Entry types | `EVENT` (holidays, day camp, taxes, sport, health…, with an estimated cost), `SHOPPING` (linked to a list), `MEAL` (recipe and servings), `ACCOUNTING` (month report or approval session) |
 | To-do | Lists, assignee, due date-time, priority, repeating chores that recreate themselves when done |
-| Shopping | Lists grouped by store type (supermarket, DIY, garden, clothing…) and aisle, manual items and recipe ingredients added up per item, clothes and shoes bought for a member with their size, estimated cost, recipes cookable with the list, completion with the amount paid in each kind of shop |
+| Shopping | Lists grouped by store type (supermarket, DIY, garden, clothing…) and aisle, manual items and recipe ingredients added up per item (ingredients already at home can be unchecked when adding a recipe), list renaming, clothes and shoes bought for a member with their size, estimated cost, recipes cookable with the list, completion with the amount paid in each kind of shop |
 | Recipes | Ingredients from the catalog, scaling to any number of servings, add to a list, plan as a meal |
 | Catalog | Goods and ingredients with store type, aisle, unit and estimated price; a starter catalog is provided |
 | Budget (parents) | Accounts and balances, envelopes per category grouped by the 50/30/20 rule, transactions planned, pending and approved, recurring bills and income, month and year reports |

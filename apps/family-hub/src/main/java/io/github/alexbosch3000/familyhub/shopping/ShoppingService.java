@@ -19,6 +19,7 @@ import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -125,15 +126,22 @@ public class ShoppingService {
         return get(listId);
     }
 
-    /** Adds the recipe's ingredients, scaled to {@code servings}, as lines tied to this recipe entry. */
+    /**
+     * Adds the recipe's ingredients, scaled to {@code servings}, as lines tied to this recipe entry, except
+     * those in {@code skippedItemIds}.
+     */
     @Transactional
     @WithSpan
     public ShoppingList addRecipe(@SpanAttribute("familyhub.shopping.list_id") long listId,
-            @SpanAttribute("familyhub.recipe.id") long recipeId, int servings) {
+            @SpanAttribute("familyhub.recipe.id") long recipeId, int servings,
+            Collection<Long> skippedItemIds) {
         requireOpen(listId);
         List<RecipeIngredient> ingredients = recipes.ingredientsFor(recipeId, servings);
         long entryId = repository.insertRecipe(listId, recipeId, servings);
         for (RecipeIngredient ingredient : ingredients) {
+            if (skippedItemIds.contains(ingredient.itemId())) {
+                continue;
+            }
             repository.insertLine(listId, ingredient.itemId(), entryId, null, ingredient.quantity(), null);
         }
         return get(listId);

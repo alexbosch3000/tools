@@ -57,7 +57,9 @@ class ShoppingController {
     record PaymentRequest(@NotNull StoreType storeType, @PositiveOrZero long amountCents) {
     }
 
-    record ListRecipeRequest(@NotNull Long recipeId, @Min(1) @Max(50) int servings) {
+    /** @param skippedItemIds ingredients the family already has, left out of the list */
+    record ListRecipeRequest(@NotNull Long recipeId, @Min(1) @Max(50) int servings,
+            @Nullable @Size(max = 100) List<Long> skippedItemIds) {
     }
 
     /** @param payments what was paid in each kind of shop, each recorded in its budget category */
@@ -113,7 +115,8 @@ class ShoppingController {
 
     @PostMapping("/{id}/recipes")
     ShoppingList addRecipe(@PathVariable long id, @Valid @RequestBody ListRecipeRequest request) {
-        return shopping.addRecipe(id, request.recipeId(), request.servings());
+        return shopping.addRecipe(id, request.recipeId(), request.servings(),
+                request.skippedItemIds() == null ? List.of() : request.skippedItemIds());
     }
 
     @DeleteMapping("/{id}/recipes/{entryId}")
