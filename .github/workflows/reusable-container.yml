@@ -59,6 +59,8 @@ jobs:
         with:
           context: apps/${{ inputs.app }}
           load: true
+          # Images that declare `ARG VERSION` report it, for example as the OpenTelemetry service.version.
+          build-args: VERSION=sha-${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ inputs.app }}
@@ -93,6 +95,7 @@ jobs:
           context: apps/${{ inputs.app }}
           push: true
           provenance: false
+          build-args: VERSION=sha-${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ inputs.app }}

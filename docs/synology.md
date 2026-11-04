@@ -31,6 +31,25 @@ To reach it over HTTPS, add a rule in Control Panel → Login Portal → Advance
 
 Tasks are stored in each browser's `localStorage`: they are not shared between devices, nor with the GitHub Pages version of the app.
 
+## family-hub
+
+It answers on `http://<nas>:8081` (`HOST_PORT`). The database lives in `DATA_DIR`, which must exist and belong to the account in `PUID:PGID` before the first start:
+
+```bash
+id <your-dsm-user>                                  # uid=1026(...) gid=100(users) -> PUID=1026, PGID=100
+sudo mkdir -p /volume1/docker/family-hub/data
+sudo chown 1026:100 /volume1/docker/family-hub/data   # your PUID:PGID
+cd /volume1/docker/family-hub && sudo docker compose up -d
+```
+
+Open the app once from the local network and create the first parent account before publishing it: until then, the first visitor would create it. To reach it from outside, add a reverse proxy rule (Control Panel → Login Portal → Advanced → Reverse Proxy) from `https://<hostname>:443` to `http://localhost:8081`, with a certificate for `<hostname>` (Control Panel → Security → Certificate, Let's Encrypt). Never forward port 8081 on the router.
+
+The interface is also published on GitHub Pages (`https://alexbosch3000.github.io/tools/`). It asks once for the server address, `https://<hostname>`, and keeps it in the browser. This requires the HTTPS reverse proxy above, because an HTTPS page cannot call an HTTP server, and `APP_ALLOWED_ORIGINS=https://alexbosch3000.github.io` in `.env` (the default of `.env.example`). Leave `APP_ALLOWED_ORIGINS` empty to use only the interface served by the NAS.
+
+Observability: set `OTEL_EXPORTER_OTLP_ENDPOINT` in `.env` to an OpenTelemetry collector (for example `http://<collector>:4318`) to export traces, logs and metrics; Prometheus can also scrape `/actuator/prometheus`.
+
+Backups: the *Famille* page offers a consistent copy of the database to download. With Hyper Backup, back up `DATA_DIR` while the container is stopped: a copy of a running SQLite database can miss its latest changes, which are still in `family-hub.db-wal`.
+
 ## dupscan
 
 A scan runs to completion and exits, so the project is started on demand rather than kept running.

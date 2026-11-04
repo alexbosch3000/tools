@@ -1,0 +1,59 @@
+# Alerting rules for family-hub, for Prometheus or the Mimir ruler. Metric names are those of the
+# OTLP export translated by Prometheus (dots become underscores, units and _total are appended);
+# `job` is "<service.namespace>/<service.name>", i.e. "tools/family-hub".
+groups:
+  - name: family-hub
+    rules:
+      - alert: FamilyHubDown
+        expr: absent_over_time(jvm_thread_count{job=~".*family-hub"}[5m])
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: family-hub sends no telemetry
+          description: No metric received for 5 minutes; the service is down or cannot reach the collector.
+
+      - alert: FamilyHubHighErrorRate
+        expr: |
+          sum(rate(http_server_request_duration_seconds_count{job=~".*family-hub", http_response_status_code=~"5.."}[10m]))
+            / sum(rate(http_server_request_duration_seconds_count{job=~".*family-hub"}[10m])) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: More than 5 % of family-hub requests fail
+          description: Look at the error traces in Tempo and the ERROR logs in Loki for service family-hub.
+
+      - alert: FamilyHubSlowRequests
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(http_server_request_duration_seconds_bucket{job=~".*family-hub"}[15m]))) > 1
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: family-hub answers slowly (p95 above 1 s)
+
+      - alert: FamilyHubPasswordGuessing
+        expr: increase(familyhub_auth_logins_total{job=~".*family-hub", outcome="throttled"}[15m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: Logins to family-hub are being throttled
+          description: Five wrong passwords in a row locked an account; check where the attempts come from.
+
+      - alert: FamilyHubDiskAlmostFull
+        expr: min(disk_free_bytes{job=~".*family-hub"}) < 200 * 1024 * 1024
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Less than 200 MB free next to the family-hub database
+
+      - alert: FamilyHubApprovalsPiling
+        expr: max(familyhub_accounting_approvals_pending{job=~".*family-hub"}) > 20
+        for: 3d
+        labels:
+          severity: info
+        annotations:
+          summary: More than 20 transactions have been waiting for approval for three days

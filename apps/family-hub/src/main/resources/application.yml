@@ -1,0 +1,83 @@
+# Service configuration. Every setting that differs between environments comes from an
+# environment variable documented in README.md; the defaults suit local development.
+app:
+  data-dir: ${APP_DATA_DIR:./data}
+  time-zone: ${APP_TIME_ZONE:Europe/Paris}
+  # Origins of a UI served elsewhere, e.g. https://alexbosch3000.github.io; empty: same origin only.
+  allowed-origins: ${APP_ALLOWED_ORIGINS:}
+
+spring:
+  application:
+    name: family-hub
+  datasource:
+    # SQLite serialises writers: a single connection avoids SQLITE_BUSY errors entirely.
+    url: jdbc:sqlite:${app.data-dir}/family-hub.db?foreign_keys=on&journal_mode=WAL&busy_timeout=10000
+    hikari:
+      maximum-pool-size: 1
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  # Blocking I/O (JDBC, HTTP) on virtual threads: no thread pool to size.
+  threads:
+    virtual:
+      enabled: true
+  jackson:
+    deserialization:
+      # Jackson 3 rejects absent primitive fields by default; an absent boolean means false.
+      fail-on-null-for-primitives: false
+  mvc:
+    problemdetails:
+      enabled: true
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          # index.html and the other unversioned files; /assets/ is cached for a year (StaticResourcesConfig).
+          no-cache: true
+
+server:
+  port: 8080
+  shutdown: graceful
+  # Honour X-Forwarded-* headers from a reverse proxy terminating HTTPS.
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          additional-path: server:/healthz
+        readiness:
+          # Not ready when the database or the disk holding it cannot take writes.
+          include: readinessState,db,diskSpace
+          additional-path: server:/readyz
+  health:
+    diskspace:
+      path: ${app.data-dir}
+      threshold: 50MB
+  info:
+    java:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      # Latency histograms, so that dashboards and alerts can compute percentiles.
+      percentiles-histogram:
+        http.server.requests: true
+
+springdoc:
+  # Stable key order keeps the committed contract (web/src/api/openapi.json) diff-friendly.
+  writer-with-order-by-keys: true
+  default-produces-media-type: application/json
+  show-actuator: false
+
+logging:
+  structured:
+    format:
+      console: ecs

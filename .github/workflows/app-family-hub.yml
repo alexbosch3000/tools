@@ -1,0 +1,60 @@
+# CI/CD for apps/family-hub: verify (Java service and its React front end) and scan on every change,
+# then, from the default branch, publish the image to GHCR and the front end to GitHub Pages. The
+# image is deployed where it runs (Synology NAS, container platform), outside this repository; the
+# Pages site asks for the address of that server.
+name: app-family-hub
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/family-hub/**
+      - .github/workflows/app-family-hub.yml
+      - .github/workflows/reusable-java.yml
+      - .github/workflows/reusable-container.yml
+      - .github/workflows/reusable-pages.yml
+  pull_request:
+    paths:
+      - apps/family-hub/**
+      - .github/workflows/app-family-hub.yml
+      - .github/workflows/reusable-java.yml
+      - .github/workflows/reusable-container.yml
+      - .github/workflows/reusable-pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    uses: ./.github/workflows/reusable-java.yml
+    with:
+      app: family-hub
+      node-dir: web
+      pages: true
+
+  container:
+    needs: verify
+    uses: ./.github/workflows/reusable-container.yml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    with:
+      app: family-hub
+      push: ${{ github.ref == 'refs/heads/main' }}
+
+  # GitHub Pages owner: move this job and `pages: true` to another app's workflow to hand Pages over.
+  pages:
+    if: github.ref == 'refs/heads/main'
+    needs: [verify, container]
+    uses: ./.github/workflows/reusable-pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

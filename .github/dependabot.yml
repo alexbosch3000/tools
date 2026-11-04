@@ -12,7 +12,8 @@ updates:
         patterns: ['*']
 
   - package-ecosystem: npm
-    directories: ['/apps/*']
+    # /apps/*/web: front ends embedded in a service (family-hub).
+    directories: ['/apps/*', '/apps/*/web']
     schedule:
       interval: weekly
     groups:

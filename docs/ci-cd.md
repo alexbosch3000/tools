@@ -8,13 +8,13 @@ Each app has its own workflow, triggered only by changes in its directory. Share
 |---|---|---|
 | `app-<app>.yml` | push to `main`, pull request, manual; filtered on `apps/<app>/**` | Entry point for one app: chains the reusable workflows and its deployment. |
 | `reusable-node.yml` | called | Sets up Node.js from `.nvmrc` and runs `make ci`. With `pages: true`, also builds and uploads the GitHub Pages site on `main`. |
-| `reusable-java.yml` | called | Sets up the JDK from `.java-version` and runs `make ci`. |
+| `reusable-java.yml` | called | Sets up the JDK from `.java-version` and runs `make ci`. With `node-dir`, also sets up Node.js from that directory's `.nvmrc` for an embedded front end; with `pages: true` as well, builds that front end alone (`make pages`) and uploads it as the GitHub Pages site on `main`. |
 | `reusable-container.yml` | called | Builds the image, smoke-tests it (`make smoke`), scans it, and when `push: true` publishes it to GHCR with a build provenance attestation. |
 | `reusable-pages.yml` | called | Deploys the Pages site uploaded earlier in the same run. |
 | `codeql.yml` | push to `main`, pull request, weekly | SAST for all code and for the workflows themselves. |
 | `dependency-review.yml` | pull request | Blocks new dependencies with high or critical vulnerabilities. |
 
-Dependabot (`.github/dependabot.yml`) opens weekly update pull requests for GitHub Actions, npm, Maven and Docker base images in every `apps/*` directory. Two rules keep those pull requests mergeable:
+Dependabot (`.github/dependabot.yml`) opens weekly update pull requests for GitHub Actions, npm, Maven and Docker base images in every `apps/*` directory, and for npm in `apps/*/web` (front ends embedded in a service). Two rules keep those pull requests mergeable:
 
 - `react` and `react-dom` are grouped, because their versions must move together.
 - Major versions of the Node.js, Temurin and Maven base images are not proposed. They follow the LTS releases and are bumped by hand, together with `.nvmrc` or `.java-version`, so that CI keeps testing what the image ships. Tailwind CSS major versions are skipped until the app is migrated on purpose.
@@ -48,21 +48,21 @@ flowchart LR
 
 | Target | When to use | Notes |
 |---|---|---|
-| GitHub Pages | One static site per repository | Pages hosts a single site: only one app owns it at a time, currently `my-todo-list`. See [Hand over GitHub Pages](#hand-over-github-pages). |
+| GitHub Pages | One static site per repository | Pages hosts a single site: only one app owns it at a time, currently `family-hub`. See [Hand over GitHub Pages](#hand-over-github-pages). |
 | Synology NAS (Container Manager) | Private use at home | Each app's `docker-compose.yml` runs the GHCR image; see [synology.md](synology.md). The NAS pulls, nothing is pushed to it. |
 | Container platform (Kubernetes, Azure Container Apps, ...) | Every other app | Pull the image from GHCR by digest. Declarative deployment (for example an ArgoCD-managed manifest repository) is kept outside this repository. |
 
 ## Hand over GitHub Pages
 
-Pages is served at `https://<owner>.github.io/<repo>/`. The app that owns it builds its site with `make build BASE_PATH=/<repo>/` (see the static web app baseline in [app-contract.md](app-contract.md)).
+Pages is served at `https://<owner>.github.io/<repo>/`. The app that owns it builds its site with `make build BASE_PATH=/<repo>/` (static web app) or `make pages BASE_PATH=/<repo>/` (service with an embedded user interface, whose site then asks for the address of the server); see the baselines in [app-contract.md](app-contract.md).
 
 To give Pages to another app, in a single pull request:
 
-1. In the current owner's workflow (`app-my-todo-list.yml`), remove `pages: true` from the `verify` job and delete the `pages` job.
-2. In the new owner's workflow, add `pages: true` to its `verify` job and copy the `pages` job.
+1. In the current owner's workflow (`app-family-hub.yml`), remove `pages: true` from the `verify` job, delete the `pages` job and the `reusable-pages.yml` trigger paths.
+2. In the new owner's workflow, add `pages: true` to its `verify` job, copy the `pages` job and add `reusable-pages.yml` to its trigger paths.
 3. Update the Deployment column of the root `README.md` and the owner named in [Deployment targets](#deployment-targets).
 
-The previous app keeps being published as a container image. Two workflows must never deploy Pages at the same time: each deployment replaces the whole site.
+The previous app keeps being published as a container image. Two workflows must never deploy Pages at the same time: each deployment replaces the whole site. Data a previous app kept in the browser (`localStorage`) stays there but is no longer reachable from the site.
 
 ## Supply chain rules
 

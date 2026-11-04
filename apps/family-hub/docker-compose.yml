@@ -1,0 +1,35 @@
+# Runs family-hub on a Docker host such as a Synology NAS (Container Manager).
+# Setup, update and rollback: docs/synology.md. Variables are read from .env, see .env.example.
+name: family-hub
+
+services:
+  family-hub:
+    image: ghcr.io/alexbosch3000/tools/family-hub:${IMAGE_TAG:-latest}
+    # Run as a NAS user that owns DATA_DIR (see PUID in .env.example).
+    user: "${PUID:-1026}:${PGID:-100}"
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-8081}:8080"
+    read_only: true
+    # The SQLite driver loads its native library from /tmp, which must therefore allow exec.
+    tmpfs:
+      - /tmp:exec
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${MEM_LIMIT:-512m}
+    pids_limit: 200
+    environment:
+      APP_TIME_ZONE: ${APP_TIME_ZONE:-Europe/Paris}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-}
+      # Attaches the OpenTelemetry agent when set (see the README for the other OTEL_* variables).
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    volumes:
+      - ${DATA_DIR:-/volume1/docker/family-hub/data}:/data
+    # Keep the NAS volume from filling up: Docker does not rotate container logs by default.
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
