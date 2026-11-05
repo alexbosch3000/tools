@@ -16,7 +16,7 @@ class ShoppingFlowsTest extends IntegrationTest {
     void renamesAListAndMovesItsPlannedDate() throws Exception {
         String token = parentToken();
         long id = id(postJson(token, "/api/shopping/lists", """
-                {"name":"Samedi","plannedFor":"2026-11-07"}""").andExpect(status().isOk()));
+                {"name":"Samedi","plannedFor":"2026-11-07"}""").andExpect(status().isCreated()));
 
         putJson(token, "/api/shopping/lists/" + id, """
                 {"name":"Marché du dimanche","plannedFor":"2026-11-08"}""").andExpect(status().isOk());
@@ -37,7 +37,7 @@ class ShoppingFlowsTest extends IntegrationTest {
         long crepes = catalogId(token, "/api/recipes", "Crêpes");
         long flour = catalogId(token, "/api/items", "Farine");
         long listId = id(postJson(token, "/api/shopping/lists", """
-                {"name":"Crêpes sans farine"}""").andExpect(status().isOk()));
+                {"name":"Crêpes sans farine"}""").andExpect(status().isCreated()));
 
         postJson(token, "/api/shopping/lists/" + listId + "/recipes", """
                 {"recipeId":%d,"servings":4,"skippedItemIds":[%d]}""".formatted(crepes, flour))
