@@ -34,7 +34,7 @@ money go" without the cost of real accounting.
 | `recipes` | Cooking recipes | Ingredients (catalog items with quantity and unit), servings, scaling, suggestions from available items |
 | `shopping` | Shopping lists | Manual lines and recipe-derived lines, lines bought for a member (clothes, shoes), aggregation by item, member and unit, grouping by store and aisle, estimated cost, completion with the amount paid per store type |
 | `planning` | Time-boxed family activities | Entries at minute precision, typed (`EVENT`, `SHOPPING`, `MEAL`, `ACCOUNTING`), categories (holidays, day camp, taxes, sport...), recurrence with exceptions, attendees, estimated cost, French public holidays, iCalendar feed |
-| `todo` | Unscheduled or loosely scheduled work | Lists, items with assignee, priority, optional due time, repetition |
+| `todo` | Unscheduled or loosely scheduled work | Lists, items with assignee, priority, optional start and due times, repetition; the planning page merges the dated items with its own entries in the UI, so `planning` does not depend on `todo` |
 | `accounting` | Family budget | Accounts, categories with envelopes, transactions (`PLANNED` or `PENDING`, then `APPROVED`), recurring transactions, monthly and yearly reports |
 | `dashboard` | Read-only aggregation | Agenda, load per member, overdue to-dos, open lists, budget consumption, approvals to do |
 | `admin` | Operations | Consistent database backup download |

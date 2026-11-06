@@ -1,10 +1,15 @@
 // Placement of occurrences in the week and month views.
 import { describe, expect, it } from 'vitest'
 import type { Schemas } from '../api/client.ts'
-import { dayAgenda, isBanner, layoutDay, touchesDay } from './calendar.ts'
+import { dayAgenda, entryItem, isBanner, layoutDay, taskItem, touchesDay, type CalendarItem } from './calendar.ts'
 
 const occ = (title: string, start: string, end: string, allDay = false) =>
-  ({ start, end, entry: { id: title.length, title, allDay } }) as unknown as Schemas['Occurrence']
+  entryItem({ start, end, entry: { id: title.length, title, allDay } } as unknown as Schemas['Occurrence'])
+
+const title = (item: CalendarItem) => (item.kind === 'entry' ? item.occurrence.entry.title : item.task.title)
+
+const task = (patch: Partial<Schemas['TodoItem']>) =>
+  taskItem({ id: 1, listId: 1, title: 'Tâche', notes: '', priority: 'NORMAL', done: false, ...patch })
 
 describe('calendar layout', () => {
   it('puts overlapping occurrences side by side and others at full width', () => {
@@ -14,7 +19,7 @@ describe('calendar layout', () => {
       occ('ccc', '2026-11-03T10:00:00', '2026-11-03T10:30:00'),
       occ('dddd', '2026-11-03T14:00:00', '2026-11-03T15:00:00'),
     ], '2026-11-03')
-    const by = Object.fromEntries(layout.map((l) => [l.occurrence.entry.title, l]))
+    const by = Object.fromEntries(layout.map((l) => [title(l.item), l]))
     expect(by.a).toMatchObject({ top: 540, bottom: 600, column: 0, columns: 2 })
     expect(by.bb).toMatchObject({ column: 1, columns: 2 })
     expect(by.ccc).toMatchObject({ column: 0, columns: 2 })
@@ -27,7 +32,7 @@ describe('calendar layout', () => {
       occ('other', '2026-11-04T08:00:00', '2026-11-04T09:00:00'),
       occ('midnight', '2026-11-03T23:00:00', '2026-11-04T00:00:00'),
     ], '2026-11-03')
-    expect(layout.map((l) => [l.occurrence.entry.title, l.top, l.bottom])).toEqual([
+    expect(layout.map((l) => [title(l.item), l.top, l.bottom])).toEqual([
       ['short', 480, 500], ['midnight', 1380, 1440]])
   })
 
@@ -39,6 +44,28 @@ describe('calendar layout', () => {
     expect(touchesDay(trip, '2026-11-04')).toBe(true)
     expect(touchesDay(trip, '2026-11-06')).toBe(false)
     expect(dayAgenda([occ('x', '2026-11-04T08:00:00', '2026-11-04T09:00:00'), trip], '2026-11-04')
-      .map((o) => o.entry.title)).toEqual(['trip', 'x'])
+      .map(title)).toEqual(['trip', 'x'])
+  })
+})
+
+describe('to-dos in the calendar', () => {
+  it('places a due-only task as an instant at its due time', () => {
+    const item = task({ dueAt: '2026-11-03T18:00:00' })!
+    expect(item).toMatchObject({ start: '2026-11-03T18:00:00', end: '2026-11-03T18:00:00' })
+    expect(isBanner(item)).toBe(false)
+    expect(layoutDay([item], '2026-11-03').map((l) => [l.top, l.bottom])).toEqual([[1080, 1100]])
+  })
+
+  it('keeps a same-day span in the grid and shows a multi-day span as a banner', () => {
+    expect(isBanner(task({ startAt: '2026-11-03T09:00:00', dueAt: '2026-11-03T12:00:00' })!)).toBe(false)
+    const span = task({ startAt: '2026-11-02T09:00:00', dueAt: '2026-11-04T18:00:00' })!
+    expect(isBanner(span)).toBe(true)
+    expect(touchesDay(span, '2026-11-03')).toBe(true)
+    expect(touchesDay(span, '2026-11-05')).toBe(false)
+  })
+
+  it('uses the start when there is no due date and ignores undated tasks', () => {
+    expect(task({ startAt: '2026-11-03T09:00:00' })).toMatchObject({ end: '2026-11-03T09:00:00' })
+    expect(task({})).toBeNull()
   })
 })

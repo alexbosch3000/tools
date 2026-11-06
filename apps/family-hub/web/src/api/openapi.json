@@ -2194,6 +2194,44 @@
         },
         "tags" : [ "todo-controller" ]
       }
+    },
+    "/api/todo/scheduled" : {
+      "get" : {
+        "operationId" : "scheduled",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "from",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TodoItem"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "todo-controller" ]
+      }
     }
   },
   "components" : {
@@ -3863,6 +3901,10 @@
               "type" : "null"
             } ]
           },
+          "startAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
           "title" : {
             "type" : "string"
           }
@@ -3902,6 +3944,10 @@
             }, {
               "type" : "null"
             } ]
+          },
+          "startAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
           },
           "title" : {
             "type" : "string",
