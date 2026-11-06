@@ -584,6 +584,27 @@
         "tags" : [ "backup-controller" ]
       }
     },
+    "/api/admin/restore" : {
+      "post" : {
+        "operationId" : "restore",
+        "requestBody" : {
+          "content" : {
+            "application/octet-stream" : {
+              "schema" : {
+                "type" : "string",
+                "format" : "binary"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "restore-controller" ]
+      }
+    },
     "/api/auth/login" : {
       "post" : {
         "operationId" : "login",
@@ -1455,6 +1476,27 @@
           }
         },
         "tags" : [ "session-controller" ]
+      }
+    },
+    "/api/setup/restore" : {
+      "post" : {
+        "operationId" : "setupRestore",
+        "requestBody" : {
+          "content" : {
+            "application/octet-stream" : {
+              "schema" : {
+                "type" : "string",
+                "format" : "binary"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "restore-controller" ]
       }
     },
     "/api/shopping/lists" : {

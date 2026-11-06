@@ -5,6 +5,7 @@ import { api, unwrap } from '../../api/client.ts'
 import { normalizeServerUrl, remoteMode } from '../../app/connection.ts'
 import { signIn } from '../../app/useSession.ts'
 import { MEMBER_COLORS } from '../../lib/labels.ts'
+import { RestoreUpload } from '../../components/RestoreUpload.tsx'
 import { Button, ErrorMessage, Field } from '../../components/ui.tsx'
 
 function Frame({ title, intro, children }: { title: string, intro?: ReactNode, children: ReactNode }) {
@@ -69,6 +70,10 @@ export function SetupPage() {
         <ErrorMessage error={setup.error} />
         <Button type="submit" variant="primary" className="w-full" disabled={setup.isPending}>Créer la famille</Button>
       </form>
+      <div className="space-y-2 border-t border-line pt-4">
+        <p className="text-sm text-ink-2">Ou restaurer une sauvegarde de family-hub (fichier .db) :</p>
+        <RestoreUpload path="/api/setup/restore" label="Restaurer une sauvegarde" />
+      </div>
     </Frame>
   )
 }

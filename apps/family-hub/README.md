@@ -88,6 +88,8 @@ The Pages build carries a Content Security Policy that only allows calls to HTTP
 | `GET /actuator/prometheus` | Prometheus metrics, including the business metrics below. |
 | `GET /actuator/info` | Version, build time and Java runtime. |
 | `GET /api/admin/backup` | Parents only: consistent copy of the database (`VACUUM INTO`), taken while the service runs. |
+| `POST /api/admin/restore` | Parents only: replaces the whole database with the uploaded backup file (`application/octet-stream`, 200 MB at most). The file is checked first (integrity, schema not newer than the service, at least one parent), then Flyway upgrades an older backup. Everyone is signed out afterwards. |
+| `POST /api/setup/restore` | Same body, without signing in, and only while no member exists (like `/api/setup`): sets up a fresh instance from a backup. `409` otherwise. |
 | `GET /api/planning/feed/{token}.ics` | iCalendar feed; the token is created in *Famille* and can be revoked. |
 | `POST /api/auth/login` | Returns an access token for `Authorization: Bearer <token>`, valid 30 days after its last use. Five failures for a username within 15 minutes answer `429` with `Retry-After`. |
 | `/api/**` | JSON API used by the UI, Bearer token required. Contract: [`web/src/api/openapi.json`](web/src/api/openapi.json) (OpenAPI 3.1), checked by `OpenApiContractTest`. |
@@ -97,6 +99,20 @@ The Pages build carries a Content Security Policy that only allows calls to HTTP
 - The container runs as UID `10001` with a read-only root filesystem. `/tmp` must allow `exec`: the SQLite driver loads its native library from there.
 - Shutdown is graceful (30 seconds). The database is migrated by Flyway at startup.
 - Backup: download `/api/admin/backup` from the UI (*Famille*), or copy `DATA_DIR` while the container is stopped. Do not copy `family-hub.db` alone while it runs: recent changes may still be in `family-hub.db-wal`.
+
+### Backup, restore and automation
+
+The backup file holds the whole configuration (members and password hashes, lists, planning, budget), so it is the way to move or rebuild an instance. Restore it from *Famille* (*Restaurer une sauvegarde*), from the first-run screen, or by script:
+
+```bash
+TOKEN=$(curl -fsS -X POST https://nas.example/api/auth/login -H 'Content-Type: application/json' \
+  -d '{"username":"alex","password":"…"}' | jq -r .token)
+curl -fsS -H "Authorization: Bearer $TOKEN" https://nas.example/api/admin/backup -o family-hub.db
+curl -fsS -X POST --data-binary @family-hub.db -H 'Content-Type: application/octet-stream' \
+  https://nas.example/api/setup/restore   # fresh instance only, before exposing it
+```
+
+Every other setting can be scripted through the documented API (`/v3/api-docs`).
 
 ## Observability
 
