@@ -4,6 +4,7 @@ package io.github.alexbosch3000.familyhub.shopping.internal;
 import io.github.alexbosch3000.familyhub.catalog.Quantity;
 import io.github.alexbosch3000.familyhub.catalog.StoreType;
 import io.github.alexbosch3000.familyhub.catalog.Unit;
+import io.github.alexbosch3000.familyhub.shopping.Purchase;
 import io.github.alexbosch3000.familyhub.shopping.ShoppingList;
 import io.github.alexbosch3000.familyhub.shopping.ShoppingListSummary;
 import io.github.alexbosch3000.familyhub.shopping.ShoppingPayment;
@@ -48,6 +49,10 @@ class ShoppingController {
 
     /** @param memberId the member the item is for (clothes, shoes); absent for the household */
     record LineRequest(@NotNull Long itemId, @Nullable Long memberId, @Positive double quantity, @NotNull Unit unit,
+            @Nullable @Size(max = 120) String note) {
+    }
+
+    record PurchaseRequest(@Positive double quantity, @NotNull Unit unit, @Nullable @PositiveOrZero Long priceCents,
             @Nullable @Size(max = 120) String note) {
     }
 
@@ -105,6 +110,19 @@ class ShoppingController {
     ShoppingList removeRow(@PathVariable long id, @PathVariable long itemId,
             @RequestParam(required = false) @Nullable Long memberId) {
         return shopping.removeRow(id, itemId, memberId);
+    }
+
+    @PutMapping("/{id}/items/{itemId}/purchase")
+    ShoppingList setPurchase(@PathVariable long id, @PathVariable long itemId,
+            @RequestParam(required = false) @Nullable Long memberId, @Valid @RequestBody PurchaseRequest request) {
+        return shopping.setPurchase(id, itemId, memberId,
+                new Purchase(new Quantity(request.quantity(), request.unit()), request.priceCents(), request.note()));
+    }
+
+    @DeleteMapping("/{id}/items/{itemId}/purchase")
+    ShoppingList clearPurchase(@PathVariable long id, @PathVariable long itemId,
+            @RequestParam(required = false) @Nullable Long memberId) {
+        return shopping.clearPurchase(id, itemId, memberId);
     }
 
     @PutMapping("/{id}/items/{itemId}/checked")

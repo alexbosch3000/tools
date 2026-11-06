@@ -14,6 +14,7 @@ import { ItemPicker } from '../../components/ItemPicker.tsx'
 import { Badge, Button, Card, Empty, ErrorMessage, Field, Loading, MemberDot, PageHeader, Select } from '../../components/ui.tsx'
 import { CompleteDialog } from './CompleteDialog.tsx'
 import { ListDialog } from './ListDialog.tsx'
+import { RowDialog } from './RowDialog.tsx'
 import { useOptimisticChecks } from './useOptimisticChecks.ts'
 
 type Row = Schemas['ShoppingRow']
@@ -153,6 +154,7 @@ export function ShoppingListPage() {
   const [store, setStore] = useState<Schemas['StoreType'] | null>(null)
   const [completing, setCompleting] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [editingRow, setEditingRow] = useState<Row | null>(null)
 
   const checks = useOptimisticChecks()
   const isChecked = (row: Row) => checks.isChecked(rowKey(row), row.checked)
@@ -212,17 +214,20 @@ export function ShoppingListPage() {
                   <ul className="divide-y divide-line rounded-lg border border-line">
                     {aisle.rows.map((row) => {
                       const member = members.find((m) => m.id === row.memberId)
-                      const details = [member && `pour ${member.name}`, sizeOf(member, row), ...row.recipes, ...row.notes].filter(Boolean)
+                      const needed = row.quantities.map(formatQuantity).join(' + ')
+                      const details = [member && `pour ${member.name}`, sizeOf(member, row), row.purchase && `besoin ${needed}`,
+                        row.purchase?.note, ...row.recipes, ...row.notes].filter(Boolean)
                       return (
                         <li key={rowKey(row)} className="flex items-center gap-3 px-3 py-2">
                           <input type="checkbox" checked={isChecked(row)} disabled={!open} onChange={() => tick(row)}
                             aria-label={`Dans le panier : ${row.name}${member ? ` pour ${member.name}` : ''}`} className="h-5 w-5 accent-accent" />
-                          <div className="min-w-0 flex-1">
-                            <p className={isChecked(row) ? 'text-ink-3 line-through' : ''}>
-                              {row.name} <span className="text-sm text-ink-3">{row.quantities.map(formatQuantity).join(' + ')}</span>
-                            </p>
-                            {details.length > 0 && <p className="truncate text-xs text-ink-3">{details.join(' · ')}</p>}
-                          </div>
+                          <button type="button" disabled={!open} onClick={() => setEditingRow(row)}
+                            className="min-w-0 flex-1 text-left enabled:hover:text-accent">
+                            <span className={`block ${isChecked(row) ? 'text-ink-3 line-through' : ''}`}>
+                              {row.name} <span className="text-sm text-ink-3">{row.purchase ? formatQuantity(row.purchase.quantity) : needed}</span>
+                            </span>
+                            {details.length > 0 && <span className="block truncate text-xs text-ink-3">{details.join(' · ')}</span>}
+                          </button>
                           <MemberDot member={member} size="h-5 w-5 text-[10px]" />
                           <span className="text-xs tabular-nums text-ink-3">{formatMoney(row.estimatedCents)}</span>
                           {open && (
@@ -257,6 +262,7 @@ export function ShoppingListPage() {
           <Card title="Recettes possibles"><Suggestions rows={data.rows} /></Card>
         </div>
       </div>
+      {editingRow && <RowDialog key={rowKey(editingRow)} listId={id} row={editingRow} onClose={() => setEditingRow(null)} />}
       {editing && <ListDialog list={data} onClose={() => setEditing(false)} />}
       {completing && <CompleteDialog list={data} onClose={() => setCompleting(false)} />}
     </>

@@ -3,6 +3,7 @@ package io.github.alexbosch3000.familyhub.shopping.internal;
 
 import io.github.alexbosch3000.familyhub.catalog.Item;
 import io.github.alexbosch3000.familyhub.catalog.Quantity;
+import io.github.alexbosch3000.familyhub.shopping.Purchase;
 import io.github.alexbosch3000.familyhub.shopping.ShoppingRow;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -18,7 +19,7 @@ public final class ShoppingRows {
     }
 
     /** Lines merged into a row: the same item for the same member, or for the household. */
-    private record RowKey(long itemId, @Nullable Long memberId) {
+    public record RowKey(long itemId, @Nullable Long memberId) {
     }
 
     /**
@@ -27,14 +28,15 @@ public final class ShoppingRows {
      *
      * @param items       catalog items of the lines, by id
      * @param recipeNames recipe names by recipe entry id
+     * @param purchases   what will be bought, by row
      */
     public static List<ShoppingRow> build(List<ShoppingLine> lines, Map<Long, Item> items,
-            Map<Long, String> recipeNames) {
+            Map<Long, String> recipeNames, Map<RowKey, Purchase> purchases) {
         Map<RowKey, List<ShoppingLine>> byRow = lines.stream().collect(Collectors.groupingBy(
                 l -> new RowKey(l.itemId(), l.memberId()), LinkedHashMap::new, Collectors.toList()));
         return byRow.entrySet().stream()
                 .map(e -> row(Objects.requireNonNull(items.get(e.getKey().itemId())), e.getKey().memberId(),
-                        e.getValue(), recipeNames))
+                        e.getValue(), recipeNames, purchases.get(e.getKey())))
                 .sorted(Comparator.comparing(ShoppingRow::storeType).thenComparing(ShoppingRow::aisle)
                         .thenComparing(ShoppingRow::name, String.CASE_INSENSITIVE_ORDER)
                         .thenComparing(r -> r.memberId() == null ? 0L : r.memberId()))
@@ -42,7 +44,7 @@ public final class ShoppingRows {
     }
 
     private static ShoppingRow row(Item item, @Nullable Long memberId, List<ShoppingLine> lines,
-            Map<Long, String> recipeNames) {
+            Map<Long, String> recipeNames, @Nullable Purchase purchase) {
         List<Quantity> quantities = Quantity.aggregate(lines.stream().map(ShoppingLine::quantity).toList());
         List<String> recipes = lines.stream().map(ShoppingLine::recipeEntryId).filter(Objects::nonNull)
                 .map(recipeNames::get).filter(Objects::nonNull).distinct().toList();
@@ -51,10 +53,13 @@ public final class ShoppingRows {
         boolean manual = lines.stream().anyMatch(l -> l.recipeEntryId() == null);
         boolean checked = lines.stream().allMatch(ShoppingLine::checked);
         return new ShoppingRow(item.id(), memberId, item.name(), item.kind(), item.storeType(), item.aisle(),
-                quantities, manual, recipes, notes, checked, estimate(item, quantities));
+                quantities, purchase, manual, recipes, notes, checked, estimate(item, quantities, purchase));
     }
 
-    private static @Nullable Long estimate(Item item, List<Quantity> quantities) {
+    private static @Nullable Long estimate(Item item, List<Quantity> quantities, @Nullable Purchase purchase) {
+        if (purchase != null) {
+            return purchase.priceCents() != null ? purchase.priceCents() : item.estimateCents(purchase.quantity());
+        }
         long total = 0;
         for (Quantity quantity : quantities) {
             Long cents = item.estimateCents(quantity);

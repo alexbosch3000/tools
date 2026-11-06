@@ -1726,6 +1726,100 @@
         "tags" : [ "shopping-controller" ]
       }
     },
+    "/api/shopping/lists/{id}/items/{itemId}/purchase" : {
+      "delete" : {
+        "operationId" : "clearPurchase",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "path",
+          "name" : "itemId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "memberId",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      },
+      "put" : {
+        "operationId" : "setPurchase",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "path",
+          "name" : "itemId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "memberId",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PurchaseRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      }
+    },
     "/api/shopping/lists/{id}/lines" : {
       "post" : {
         "operationId" : "addLine",
@@ -3105,6 +3199,46 @@
           }
         }
       },
+      "Purchase" : {
+        "type" : "object",
+        "properties" : {
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "priceCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "quantity" : {
+            "$ref" : "#/components/schemas/Quantity"
+          }
+        },
+        "required" : [ "quantity" ]
+      },
+      "PurchaseRequest" : {
+        "type" : "object",
+        "properties" : {
+          "note" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "priceCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "quantity" : {
+            "type" : "number",
+            "format" : "double",
+            "exclusiveMinimum" : 0
+          },
+          "unit" : {
+            "$ref" : "#/components/schemas/Unit"
+          }
+        },
+        "required" : [ "quantity", "unit" ]
+      },
       "Quantity" : {
         "type" : "object",
         "properties" : {
@@ -3643,6 +3777,13 @@
             "items" : {
               "type" : "string"
             }
+          },
+          "purchase" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Purchase"
+            }, {
+              "type" : "null"
+            } ]
           },
           "quantities" : {
             "type" : "array",
