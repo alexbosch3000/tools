@@ -9,6 +9,8 @@ import io.github.alexbosch3000.familyhub.shared.NotFoundException;
 import io.github.alexbosch3000.familyhub.todo.internal.TodoMetrics;
 import io.github.alexbosch3000.familyhub.todo.internal.TodoRepository;
 import java.time.Clock;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -18,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TodoService {
+
+    private static final int MAX_SCHEDULED_DAYS = 400;
 
     private final TodoRepository repository;
     private final MemberService members;
@@ -32,7 +36,8 @@ public class TodoService {
     }
 
     public record TodoItemData(long listId, String title, @Nullable String notes, @Nullable Long assigneeId,
-            @Nullable LocalDateTime dueAt, @Nullable Priority priority, @Nullable Repeat repeat) {
+            @Nullable LocalDateTime startAt, @Nullable LocalDateTime dueAt, @Nullable Priority priority,
+            @Nullable Repeat repeat) {
     }
 
     public List<TodoList> lists() {
@@ -63,6 +68,14 @@ public class TodoService {
     /** Items, optionally filtered; open items first by due date, then the most recently done. */
     public List<TodoItem> items(@Nullable Long listId, @Nullable Long assigneeId, boolean includeDone) {
         return repository.findItems(listId, assigneeId, includeDone);
+    }
+
+    /** Items meeting the days from {@code from} to {@code to} inclusive, for the planning. */
+    public List<TodoItem> scheduled(LocalDate from, LocalDate to) {
+        if (to.isBefore(from) || ChronoUnit.DAYS.between(from, to) > MAX_SCHEDULED_DAYS) {
+            throw new InvalidRequestException("Période invalide (400 jours au plus).");
+        }
+        return repository.findScheduled(from.atStartOfDay(), to.plusDays(1).atStartOfDay());
     }
 
     public List<TodoItem> openItems() {
@@ -101,8 +114,11 @@ public class TodoService {
             metrics.completed();
         }
         if (done && !item.done() && item.repeat() != null && item.dueAt() != null) {
+            LocalDateTime nextDue = item.repeat().next(item.dueAt(), now);
+            LocalDateTime nextStart = item.startAt() == null ? null
+                    : nextDue.minus(Duration.between(item.startAt(), item.dueAt()));
             repository.insertItem(new TodoItemData(item.listId(), item.title(), item.notes(), item.assigneeId(),
-                    item.repeat().next(item.dueAt(), now), item.priority(), item.repeat()), now);
+                    nextStart, nextDue, item.priority(), item.repeat()), now);
         }
         return get(id);
     }
@@ -122,8 +138,13 @@ public class TodoService {
             throw new InvalidRequestException("Une tâche répétée a besoin d'une échéance.");
         }
         LocalDateTime due = data.dueAt() == null ? null : data.dueAt().truncatedTo(ChronoUnit.MINUTES);
+        LocalDateTime start = data.startAt() == null ? null : data.startAt().truncatedTo(ChronoUnit.MINUTES);
+        if (start != null && due != null && start.isAfter(due)) {
+            throw new InvalidRequestException("Le début doit précéder l'échéance.");
+        }
         return new TodoItemData(data.listId(), data.title().trim(), data.notes() == null ? "" : data.notes(),
-                data.assigneeId(), due, data.priority() == null ? Priority.NORMAL : data.priority(), data.repeat());
+                data.assigneeId(), start, due, data.priority() == null ? Priority.NORMAL : data.priority(),
+                data.repeat());
     }
 
     private void ensureListNameFree(String name, @Nullable Long exceptId) {

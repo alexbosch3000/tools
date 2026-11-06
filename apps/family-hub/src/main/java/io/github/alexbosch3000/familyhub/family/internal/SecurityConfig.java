@@ -42,7 +42,7 @@ class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http, TokenService tokens) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/session", "/api/setup", "/api/auth/login").permitAll()
+                .requestMatchers("/api/session", "/api/setup", "/api/setup/restore", "/api/auth/login").permitAll()
                 // Calendar applications cannot log in: the feed is protected by a token in its URL.
                 .requestMatchers(HttpMethod.GET, "/api/planning/feed/*").permitAll()
                 .requestMatchers("/api/accounting/**", "/api/admin/**").hasRole("PARENT")

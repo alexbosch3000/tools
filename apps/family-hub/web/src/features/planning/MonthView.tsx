@@ -1,22 +1,22 @@
 // Month view: one cell per day with its first occurrences. Clicking a day creates an entry on it.
-import type { Schemas } from '../../api/client.ts'
-import { dayAgenda, isBanner } from '../../lib/calendar.ts'
+import { dayAgenda, isBanner, type CalendarItem } from '../../lib/calendar.ts'
 import { combine, today } from '../../lib/dates.ts'
 import { formatTime } from '../../lib/format.ts'
-import { WEEKDAYS, entryColor } from '../../lib/labels.ts'
+import { WEEKDAYS } from '../../lib/labels.ts'
+import { itemClass, itemPrefix, itemTitle, taskLabel } from './itemDisplay.ts'
 
 const SHOWN = 3
 
 interface Props {
   weeks: string[][]
   month: string
-  occurrences: Schemas['Occurrence'][]
+  items: CalendarItem[]
   holidays: Record<string, string>
   onCreate: (start: string) => void
-  onOpen: (occurrence: Schemas['Occurrence']) => void
+  onOpen: (item: CalendarItem) => void
 }
 
-export function MonthView({ weeks, month, occurrences, holidays, onCreate, onOpen }: Props) {
+export function MonthView({ weeks, month, items: calendarItems, holidays, onCreate, onOpen }: Props) {
   const current = today()
   return (
     <div className="card overflow-x-auto p-0">
@@ -27,7 +27,7 @@ export function MonthView({ weeks, month, occurrences, holidays, onCreate, onOpe
         {weeks.map((week) => (
           <div key={week[0]} className="grid grid-cols-7 border-b border-line last:border-b-0">
             {week.map((day) => {
-              const items = dayAgenda(occurrences, day)
+              const items = dayAgenda(calendarItems, day)
               const inMonth = day.slice(0, 7) === month
               return (
                 <div key={day} onClick={(e) => { if (e.target === e.currentTarget) onCreate(combine(day, '09:00')) }}
@@ -39,9 +39,10 @@ export function MonthView({ weeks, month, occurrences, holidays, onCreate, onOpe
                   </div>
                   <div className="space-y-0.5">
                     {items.slice(0, SHOWN).map((o) => (
-                      <button key={`${o.entry.id}-${o.start}`} type="button" onClick={() => onOpen(o)}
-                        className={`block w-full truncate rounded border-l-4 px-1 text-left text-[11px] ${entryColor(o.entry)} ${o.entry.done ? 'line-through opacity-50' : ''}`}>
-                        {!isBanner(o) && <span className="font-semibold">{formatTime(o.start)} </span>}{o.entry.title}
+                      <button key={o.key} type="button" onClick={() => onOpen(o)} title={taskLabel(o) ?? undefined}
+                        aria-label={taskLabel(o) ? `${itemTitle(o)} (${taskLabel(o)})` : undefined}
+                        className={`block w-full truncate rounded border-l-4 px-1 text-left text-[11px] ${itemClass(o)}`}>
+                        {!isBanner(o) && <span className="font-semibold">{formatTime(o.start)} </span>}{itemPrefix(o)}{itemTitle(o)}
                       </button>
                     ))}
                     {items.length > SHOWN && <p className="px-1 text-[11px] text-ink-3">+{items.length - SHOWN} autres</p>}

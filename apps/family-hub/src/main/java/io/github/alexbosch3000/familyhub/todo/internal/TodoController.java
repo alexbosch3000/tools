@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
@@ -40,11 +41,12 @@ class TodoController {
     }
 
     record TodoItemRequest(@NotNull Long listId, @NotBlank @Size(max = 200) String title,
-            @Nullable @Size(max = 4000) String notes, @Nullable Long assigneeId, @Nullable LocalDateTime dueAt,
-            @Nullable Priority priority, @Nullable Repeat repeat) {
+            @Nullable @Size(max = 4000) String notes, @Nullable Long assigneeId,
+            @Nullable LocalDateTime startAt, @Nullable LocalDateTime dueAt, @Nullable Priority priority,
+            @Nullable Repeat repeat) {
 
         TodoItemData toData() {
-            return new TodoItemData(listId, title, notes, assigneeId, dueAt, priority, repeat);
+            return new TodoItemData(listId, title, notes, assigneeId, startAt, dueAt, priority, repeat);
         }
     }
 
@@ -78,6 +80,12 @@ class TodoController {
             @RequestParam(required = false) @Nullable Long assigneeId,
             @RequestParam(defaultValue = "false") boolean includeDone) {
         return todos.items(listId, assigneeId, includeDone);
+    }
+
+    /** Items whose start-to-due span (or single date) meets the period, done ones included. */
+    @GetMapping("/scheduled")
+    List<TodoItem> scheduled(@RequestParam LocalDate from, @RequestParam LocalDate to) {
+        return todos.scheduled(from, to);
     }
 
     @PostMapping("/items")

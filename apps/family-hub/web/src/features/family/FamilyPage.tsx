@@ -7,6 +7,7 @@ import { useSession } from '../../app/useSession.ts'
 import { useAction } from '../../app/useAction.ts'
 import { MEMBER_COLORS, ROLES } from '../../lib/labels.ts'
 import { Dialog } from '../../components/Dialog.tsx'
+import { RestoreUpload } from '../../components/RestoreUpload.tsx'
 import { Badge, Button, Card, ErrorMessage, Field, MemberDot, PageHeader, Select } from '../../components/ui.tsx'
 
 function MemberDialog({ member, onClose }: { member?: Schemas['Member'], onClose: () => void }) {
@@ -112,6 +113,10 @@ function Backup() {
       <p className="mb-3 text-sm text-ink-2">Téléchargez une copie complète et cohérente des données de la famille.</p>
       <Button disabled={download.isPending} onClick={() => download.mutate(undefined)}>Télécharger la sauvegarde</Button>
       <ErrorMessage error={download.error} />
+      <div className="mt-4 border-t border-line pt-4">
+        <RestoreUpload path="/api/admin/restore" label="Restaurer une sauvegarde"
+          confirmation="Toutes les données seront remplacées par celles de la sauvegarde, y compris les comptes et mots de passe." />
+      </div>
     </Card>
   )
 }

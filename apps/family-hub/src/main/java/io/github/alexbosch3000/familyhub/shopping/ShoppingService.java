@@ -19,6 +19,7 @@ import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -67,7 +68,7 @@ public class ShoppingService {
         Map<Long, Item> items = catalog.getAll(lines.stream().map(ShoppingLine::itemId).distinct().toList());
         Map<Long, String> recipeNames = listed.stream()
                 .collect(Collectors.toMap(ListedRecipe::entryId, ListedRecipe::name));
-        List<ShoppingRow> rows = ShoppingRows.build(lines, items, recipeNames);
+        List<ShoppingRow> rows = ShoppingRows.build(lines, items, recipeNames, repository.findPurchases(id));
         long estimated = rows.stream().map(ShoppingRow::estimatedCents).filter(Objects::nonNull)
                 .mapToLong(Long::longValue).sum();
         int unpriced = (int) rows.stream().filter(r -> r.estimatedCents() == null).count();
@@ -113,6 +114,27 @@ public class ShoppingService {
         if (repository.deleteRowLines(listId, itemId, memberId) == 0) {
             throw new NotFoundException("Article absent de la liste.");
         }
+        repository.deletePurchase(listId, itemId, memberId);
+        return get(listId);
+    }
+
+    /** Records what will be bought for a row, replacing the quantity and estimate computed from its lines. */
+    @Transactional
+    public ShoppingList setPurchase(long listId, long itemId, @Nullable Long memberId, Purchase purchase) {
+        requireOpen(listId);
+        if (!repository.rowExists(listId, itemId, memberId)) {
+            throw new NotFoundException("Article absent de la liste.");
+        }
+        repository.savePurchase(listId, itemId, memberId,
+                new Purchase(purchase.quantity(), purchase.priceCents(), blankToNull(purchase.note())));
+        return get(listId);
+    }
+
+    /** Goes back to the quantity and estimate computed from the lines of a row. */
+    @Transactional
+    public ShoppingList clearPurchase(long listId, long itemId, @Nullable Long memberId) {
+        requireOpen(listId);
+        repository.deletePurchase(listId, itemId, memberId);
         return get(listId);
     }
 
@@ -125,15 +147,22 @@ public class ShoppingService {
         return get(listId);
     }
 
-    /** Adds the recipe's ingredients, scaled to {@code servings}, as lines tied to this recipe entry. */
+    /**
+     * Adds the recipe's ingredients, scaled to {@code servings}, as lines tied to this recipe entry, except
+     * those in {@code skippedItemIds}.
+     */
     @Transactional
     @WithSpan
     public ShoppingList addRecipe(@SpanAttribute("familyhub.shopping.list_id") long listId,
-            @SpanAttribute("familyhub.recipe.id") long recipeId, int servings) {
+            @SpanAttribute("familyhub.recipe.id") long recipeId, int servings,
+            Collection<Long> skippedItemIds) {
         requireOpen(listId);
         List<RecipeIngredient> ingredients = recipes.ingredientsFor(recipeId, servings);
         long entryId = repository.insertRecipe(listId, recipeId, servings);
         for (RecipeIngredient ingredient : ingredients) {
+            if (skippedItemIds.contains(ingredient.itemId())) {
+                continue;
+            }
             repository.insertLine(listId, ingredient.itemId(), entryId, null, ingredient.quantity(), null);
         }
         return get(listId);
@@ -145,6 +174,7 @@ public class ShoppingService {
         if (repository.deleteRecipe(listId, entryId) == 0) {
             throw new NotFoundException("Recette absente de la liste.");
         }
+        repository.deleteOrphanPurchases(listId);
         return get(listId);
     }
 

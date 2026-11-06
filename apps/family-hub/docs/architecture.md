@@ -34,10 +34,10 @@ money go" without the cost of real accounting.
 | `recipes` | Cooking recipes | Ingredients (catalog items with quantity and unit), servings, scaling, suggestions from available items |
 | `shopping` | Shopping lists | Manual lines and recipe-derived lines, lines bought for a member (clothes, shoes), aggregation by item, member and unit, grouping by store and aisle, estimated cost, completion with the amount paid per store type |
 | `planning` | Time-boxed family activities | Entries at minute precision, typed (`EVENT`, `SHOPPING`, `MEAL`, `ACCOUNTING`), categories (holidays, day camp, taxes, sport...), recurrence with exceptions, attendees, estimated cost, French public holidays, iCalendar feed |
-| `todo` | Unscheduled or loosely scheduled work | Lists, items with assignee, priority, optional due time, repetition |
+| `todo` | Unscheduled or loosely scheduled work | Lists, items with assignee, priority, optional start and due times, repetition; the planning page merges the dated items with its own entries in the UI, so `planning` does not depend on `todo` |
 | `accounting` | Family budget | Accounts, categories with envelopes, transactions (`PLANNED` or `PENDING`, then `APPROVED`), recurring transactions, monthly and yearly reports |
 | `dashboard` | Read-only aggregation | Agenda, load per member, overdue to-dos, open lists, budget consumption, approvals to do |
-| `admin` | Operations | Consistent database backup download |
+| `admin` | Operations | Consistent database backup download, restore of a backup (depends on `family` to know whether the instance is still empty) |
 | `shared` | Cross-cutting kernel | Errors, money, clock, SQL helpers, telemetry, web and OpenAPI configuration |
 
 ### Planning entry types
@@ -203,6 +203,10 @@ erDiagram
 
 - The first visit creates the first parent (`/api/setup`), only while no member exists. Do the
   setup before exposing the service.
+- A backup can be restored without signing in (`/api/setup/restore`) under the same condition as the
+  setup: only while no member exists. Once a parent exists, restoring needs a parent's token
+  (`/api/admin/restore`). The upload is validated on a separate connection before it replaces the
+  live database.
 - Passwords are hashed with BCrypt. Login returns a random token sent as `Authorization: Bearer`;
   only its SHA-256 hash is stored. It expires after 30 days without use; logging out revokes it,
   changing a password revokes every token of the member.

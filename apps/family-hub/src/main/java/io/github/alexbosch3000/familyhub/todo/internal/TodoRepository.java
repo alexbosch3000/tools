@@ -66,6 +66,17 @@ public class TodoRepository {
                 .query(TodoRepository::map).list();
     }
 
+    /** Items starting or falling due in [begin, end), done ones included, ordered by when they begin. */
+    public List<TodoItem> findScheduled(LocalDateTime begin, LocalDateTime end) {
+        return jdbc.sql("""
+                SELECT * FROM todo_item
+                WHERE COALESCE(start_at, due_at) IS NOT NULL
+                  AND COALESCE(start_at, due_at) < :end AND COALESCE(due_at, start_at) >= :begin
+                ORDER BY COALESCE(start_at, due_at), id""")
+                .param("begin", Db.text(begin)).param("end", Db.text(end))
+                .query(TodoRepository::map).list();
+    }
+
     public Optional<TodoItem> findItem(long id) {
         return jdbc.sql("SELECT * FROM todo_item WHERE id = ?").param(id).query(TodoRepository::map).optional();
     }
@@ -73,21 +84,22 @@ public class TodoRepository {
     public long insertItem(TodoItemData data, LocalDateTime now) {
         KeyHolder keys = new GeneratedKeyHolder();
         jdbc.sql("""
-                INSERT INTO todo_item (list_id, title, notes, assignee_id, due_at, priority, repeat, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""")
-                .params(data.listId(), data.title(), data.notes(), data.assigneeId(), Db.text(data.dueAt()),
-                        data.priority().name(), Db.text(data.repeat()), Db.text(now))
+                INSERT INTO todo_item (list_id, title, notes, assignee_id, start_at, due_at, priority, repeat,
+                                       created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""")
+                .params(data.listId(), data.title(), data.notes(), data.assigneeId(), Db.text(data.startAt()),
+                        Db.text(data.dueAt()), data.priority().name(), Db.text(data.repeat()), Db.text(now))
                 .update(keys);
         return Db.key(keys);
     }
 
     public void updateItem(long id, TodoItemData data) {
         jdbc.sql("""
-                UPDATE todo_item SET list_id = ?, title = ?, notes = ?, assignee_id = ?, due_at = ?, priority = ?,
-                                     repeat = ?
+                UPDATE todo_item SET list_id = ?, title = ?, notes = ?, assignee_id = ?, start_at = ?, due_at = ?,
+                                     priority = ?, repeat = ?
                 WHERE id = ?""")
-                .params(data.listId(), data.title(), data.notes(), data.assigneeId(), Db.text(data.dueAt()),
-                        data.priority().name(), Db.text(data.repeat()), id)
+                .params(data.listId(), data.title(), data.notes(), data.assigneeId(), Db.text(data.startAt()),
+                        Db.text(data.dueAt()), data.priority().name(), Db.text(data.repeat()), id)
                 .update();
     }
 
@@ -101,7 +113,7 @@ public class TodoRepository {
 
     private static TodoItem map(ResultSet rs, int n) throws SQLException {
         return new TodoItem(rs.getLong("id"), rs.getLong("list_id"), rs.getString("title"), rs.getString("notes"),
-                Db.nullableLong(rs, "assignee_id"), Db.dateTime(rs, "due_at"),
+                Db.nullableLong(rs, "assignee_id"), Db.dateTime(rs, "start_at"), Db.dateTime(rs, "due_at"),
                 Priority.valueOf(rs.getString("priority")), Db.enumValue(rs, "repeat", Repeat.class),
                 rs.getBoolean("done"), Db.dateTime(rs, "done_at"));
     }

@@ -4,6 +4,7 @@ package io.github.alexbosch3000.familyhub.shopping.internal;
 import io.github.alexbosch3000.familyhub.catalog.Quantity;
 import io.github.alexbosch3000.familyhub.catalog.StoreType;
 import io.github.alexbosch3000.familyhub.catalog.Unit;
+import io.github.alexbosch3000.familyhub.shopping.Purchase;
 import io.github.alexbosch3000.familyhub.shopping.ShoppingList;
 import io.github.alexbosch3000.familyhub.shopping.ShoppingListSummary;
 import io.github.alexbosch3000.familyhub.shopping.ShoppingPayment;
@@ -51,13 +52,19 @@ class ShoppingController {
             @Nullable @Size(max = 120) String note) {
     }
 
+    record PurchaseRequest(@Positive double quantity, @NotNull Unit unit, @Nullable @PositiveOrZero Long priceCents,
+            @Nullable @Size(max = 120) String note) {
+    }
+
     record CheckRequest(boolean checked) {
     }
 
     record PaymentRequest(@NotNull StoreType storeType, @PositiveOrZero long amountCents) {
     }
 
-    record ListRecipeRequest(@NotNull Long recipeId, @Min(1) @Max(50) int servings) {
+    /** @param skippedItemIds ingredients the family already has, left out of the list */
+    record ListRecipeRequest(@NotNull Long recipeId, @Min(1) @Max(50) int servings,
+            @Nullable @Size(max = 100) List<Long> skippedItemIds) {
     }
 
     /** @param payments what was paid in each kind of shop, each recorded in its budget category */
@@ -105,6 +112,19 @@ class ShoppingController {
         return shopping.removeRow(id, itemId, memberId);
     }
 
+    @PutMapping("/{id}/items/{itemId}/purchase")
+    ShoppingList setPurchase(@PathVariable long id, @PathVariable long itemId,
+            @RequestParam(required = false) @Nullable Long memberId, @Valid @RequestBody PurchaseRequest request) {
+        return shopping.setPurchase(id, itemId, memberId,
+                new Purchase(new Quantity(request.quantity(), request.unit()), request.priceCents(), request.note()));
+    }
+
+    @DeleteMapping("/{id}/items/{itemId}/purchase")
+    ShoppingList clearPurchase(@PathVariable long id, @PathVariable long itemId,
+            @RequestParam(required = false) @Nullable Long memberId) {
+        return shopping.clearPurchase(id, itemId, memberId);
+    }
+
     @PutMapping("/{id}/items/{itemId}/checked")
     ShoppingList check(@PathVariable long id, @PathVariable long itemId,
             @RequestParam(required = false) @Nullable Long memberId, @RequestBody CheckRequest request) {
@@ -113,7 +133,8 @@ class ShoppingController {
 
     @PostMapping("/{id}/recipes")
     ShoppingList addRecipe(@PathVariable long id, @Valid @RequestBody ListRecipeRequest request) {
-        return shopping.addRecipe(id, request.recipeId(), request.servings());
+        return shopping.addRecipe(id, request.recipeId(), request.servings(),
+                request.skippedItemIds() == null ? List.of() : request.skippedItemIds());
     }
 
     @DeleteMapping("/{id}/recipes/{entryId}")

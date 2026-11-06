@@ -9,6 +9,7 @@ import io.github.alexbosch3000.familyhub.catalog.ItemKind;
 import io.github.alexbosch3000.familyhub.catalog.Quantity;
 import io.github.alexbosch3000.familyhub.catalog.StoreType;
 import io.github.alexbosch3000.familyhub.catalog.Unit;
+import io.github.alexbosch3000.familyhub.shopping.Purchase;
 import io.github.alexbosch3000.familyhub.shopping.ShoppingRow;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +32,8 @@ class ShoppingRowsTest {
                 new ShoppingLine(2, 1, 11L, null, new Quantity(200, Unit.G), false, null),
                 new ShoppingLine(3, 1, null, null, new Quantity(2, Unit.PIECE), false, "rouges"));
 
-        ShoppingRow onions = ShoppingRows.build(lines, ITEMS, Map.of(10L, "Ratatouille", 11L, "Soupe")).getFirst();
+        ShoppingRow onions = ShoppingRows.build(lines, ITEMS, Map.of(10L, "Ratatouille", 11L, "Soupe"),
+                Map.of()).getFirst();
 
         assertThat(onions.quantities()).containsExactly(new Quantity(500, Unit.G), new Quantity(2, Unit.PIECE));
         assertThat(onions.recipes()).containsExactly("Ratatouille", "Soupe");
@@ -48,7 +50,7 @@ class ShoppingRowsTest {
                 new ShoppingLine(2, 2, null, null, new Quantity(2, Unit.L), true, null),
                 new ShoppingLine(3, 1, null, null, new Quantity(1, Unit.KG), false, null));
 
-        List<ShoppingRow> rows = ShoppingRows.build(lines, ITEMS, Map.of());
+        List<ShoppingRow> rows = ShoppingRows.build(lines, ITEMS, Map.of(), Map.of());
 
         assertThat(rows).extracting(ShoppingRow::name).containsExactly("Oignons", "Lait", "Vis");
         assertThat(rows).extracting(ShoppingRow::estimatedCents).containsExactly(200L, 220L, null);
@@ -62,11 +64,37 @@ class ShoppingRowsTest {
                 new ShoppingLine(1, 4, null, 2L, new Quantity(1, Unit.PIECE), false, "pointure 32"),
                 new ShoppingLine(2, 4, null, 1L, new Quantity(1, Unit.PIECE), true, null),
                 new ShoppingLine(3, 4, null, 2L, new Quantity(1, Unit.PIECE), false, null)),
-                Map.of(4L, shoes), Map.of());
+                Map.of(4L, shoes), Map.of(), Map.of());
 
         assertThat(rows).extracting(ShoppingRow::memberId).containsExactly(1L, 2L);
         assertThat(rows.get(1).quantities()).containsExactly(new Quantity(2, Unit.PIECE));
         assertThat(rows.get(1).estimatedCents()).isEqualTo(9000);
         assertThat(rows.get(0).checked()).isTrue();
+    }
+
+    private static ShoppingRow rowWith(Purchase purchase) {
+        List<ShoppingLine> lines = List.of(
+                new ShoppingLine(1, 1, null, null, new Quantity(4, Unit.PIECE), false, null));
+        Map<ShoppingRows.RowKey, Purchase> purchases = Map.of(new ShoppingRows.RowKey(1, null), purchase);
+        return ShoppingRows.build(lines, ITEMS, Map.of(), purchases).getFirst();
+    }
+
+    @Test
+    void aPurchaseWithAPriceReplacesTheEstimate() {
+        ShoppingRow row = rowWith(new Purchase(new Quantity(1, Unit.PACK), 120L, null));
+
+        assertThat(row.quantities()).containsExactly(new Quantity(4, Unit.PIECE));
+        assertThat(row.purchase()).isNotNull();
+        assertThat(row.estimatedCents()).isEqualTo(120);
+    }
+
+    @Test
+    void aPurchaseWithoutAPriceIsConvertedThroughTheItemUnit() {
+        assertThat(rowWith(new Purchase(new Quantity(500, Unit.G), null, null)).estimatedCents()).isEqualTo(100);
+    }
+
+    @Test
+    void aPurchaseInAnotherDimensionWithoutAPriceCannotBePriced() {
+        assertThat(rowWith(new Purchase(new Quantity(1, Unit.PACK), null, null)).estimatedCents()).isNull();
     }
 }

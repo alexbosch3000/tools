@@ -1,10 +1,9 @@
 // Week view: all-day band on top, minute-precision time grid below. Clicking a free slot creates an entry.
 import { useEffect, useRef, type MouseEvent } from 'react'
-import type { Schemas } from '../../api/client.ts'
-import { isBanner, layoutDay, touchesDay } from '../../lib/calendar.ts'
+import { isBanner, layoutDay, touchesDay, type CalendarItem } from '../../lib/calendar.ts'
 import { combine, today } from '../../lib/dates.ts'
 import { formatDate, formatTime } from '../../lib/format.ts'
-import { entryColor } from '../../lib/labels.ts'
+import { itemClass, itemPrefix, itemTitle, taskLabel } from './itemDisplay.ts'
 
 const HOUR_PX = 44
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -18,13 +17,13 @@ function slotTime(event: MouseEvent<HTMLElement>): string {
 
 interface Props {
   days: string[]
-  occurrences: Schemas['Occurrence'][]
+  items: CalendarItem[]
   holidays: Record<string, string>
   onCreate: (start: string) => void
-  onOpen: (occurrence: Schemas['Occurrence']) => void
+  onOpen: (item: CalendarItem) => void
 }
 
-export function WeekView({ days, occurrences, holidays, onCreate, onOpen }: Props) {
+export function WeekView({ days, items, holidays, onCreate, onOpen }: Props) {
   const scroller = useRef<HTMLDivElement>(null)
   useEffect(() => { if (scroller.current) scroller.current.scrollTop = 7 * HOUR_PX }, [])
   const current = today()
@@ -45,10 +44,11 @@ export function WeekView({ days, occurrences, holidays, onCreate, onOpen }: Prop
           <div className="py-1 pr-1 text-right text-[10px] text-ink-3">jour</div>
           {days.map((day) => (
             <div key={day} className="min-h-8 space-y-0.5 border-l border-line p-0.5">
-              {occurrences.filter((o) => isBanner(o) && touchesDay(o, day)).map((o) => (
-                <button key={`${o.entry.id}-${o.start}`} type="button" onClick={() => onOpen(o)}
-                  className={`block w-full truncate rounded border-l-4 px-1 text-left text-xs ${entryColor(o.entry)}`}>
-                  {o.entry.title}
+              {items.filter((o) => isBanner(o) && touchesDay(o, day)).map((o) => (
+                <button key={o.key} type="button" onClick={() => onOpen(o)} title={taskLabel(o) ?? undefined}
+                  aria-label={taskLabel(o) ? `${itemTitle(o)} (${taskLabel(o)})` : undefined}
+                  className={`block w-full truncate rounded border-l-4 px-1 text-left text-xs ${itemClass(o)}`}>
+                  {itemPrefix(o)}{itemTitle(o)}
                 </button>
               ))}
             </div>
@@ -68,14 +68,15 @@ export function WeekView({ days, occurrences, holidays, onCreate, onOpen }: Prop
                 title="Cliquer pour ajouter une entrée"
                 onClick={(e) => { if (e.target === e.currentTarget) onCreate(combine(day, slotTime(e))) }}
                 style={{ backgroundImage: `repeating-linear-gradient(to bottom, var(--line) 0, var(--line) 1px, transparent 1px, transparent ${HOUR_PX}px)` }}>
-                {layoutDay(occurrences, day).map(({ occurrence: o, top, bottom, column, columns }) => (
-                  <button key={`${o.entry.id}-${o.start}`} type="button" onClick={() => onOpen(o)}
-                    title={`${formatTime(o.start)}–${formatTime(o.end)} ${o.entry.title}`}
+                {layoutDay(items, day).map(({ item: o, top, bottom, column, columns }) => (
+                  <button key={o.key} type="button" onClick={() => onOpen(o)}
+                    title={taskLabel(o) ?? `${formatTime(o.start)}–${formatTime(o.end)} ${itemTitle(o)}`}
+                    aria-label={taskLabel(o) ? `${itemTitle(o)} (${taskLabel(o)})` : undefined}
                     className={`absolute overflow-hidden rounded-md border-l-4 px-1 text-left text-xs leading-tight shadow-sm
-                      ${entryColor(o.entry)} ${o.entry.done ? 'line-through opacity-50' : ''}`}
+                      ${itemClass(o)}`}
                     style={{ top: (top / 60) * HOUR_PX, height: Math.max(18, ((bottom - top) / 60) * HOUR_PX - 2),
                       left: `calc(${(column / columns) * 100}% + 1px)`, width: `calc(${100 / columns}% - 2px)` }}>
-                    <span className="font-semibold">{formatTime(o.start)}</span> {o.entry.title}
+                    <span className="font-semibold">{formatTime(o.start)}</span> {itemPrefix(o)}{itemTitle(o)}
                   </button>
                 ))}
               </div>

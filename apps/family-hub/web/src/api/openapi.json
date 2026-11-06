@@ -584,6 +584,27 @@
         "tags" : [ "backup-controller" ]
       }
     },
+    "/api/admin/restore" : {
+      "post" : {
+        "operationId" : "restore",
+        "requestBody" : {
+          "content" : {
+            "application/octet-stream" : {
+              "schema" : {
+                "type" : "string",
+                "format" : "binary"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "restore-controller" ]
+      }
+    },
     "/api/auth/login" : {
       "post" : {
         "operationId" : "login",
@@ -1457,6 +1478,27 @@
         "tags" : [ "session-controller" ]
       }
     },
+    "/api/setup/restore" : {
+      "post" : {
+        "operationId" : "setupRestore",
+        "requestBody" : {
+          "content" : {
+            "application/octet-stream" : {
+              "schema" : {
+                "type" : "string",
+                "format" : "binary"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "restore-controller" ]
+      }
+    },
     "/api/shopping/lists" : {
       "get" : {
         "operationId" : "list",
@@ -1706,6 +1748,100 @@
             "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/CheckRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      }
+    },
+    "/api/shopping/lists/{id}/items/{itemId}/purchase" : {
+      "delete" : {
+        "operationId" : "clearPurchase",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "path",
+          "name" : "itemId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "memberId",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShoppingList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "shopping-controller" ]
+      },
+      "put" : {
+        "operationId" : "setPurchase",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "path",
+          "name" : "itemId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "memberId",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PurchaseRequest"
               }
             }
           },
@@ -2092,6 +2228,44 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/TodoList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "todo-controller" ]
+      }
+    },
+    "/api/todo/scheduled" : {
+      "get" : {
+        "operationId" : "scheduled",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "from",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TodoItem"
+                  }
                 }
               }
             },
@@ -2702,6 +2876,15 @@
             "format" : "int32",
             "maximum" : 50,
             "minimum" : 1
+          },
+          "skippedItemIds" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "maxItems" : 100,
+            "minItems" : 0
           }
         },
         "required" : [ "recipeId", "servings" ]
@@ -3095,6 +3278,46 @@
             "format" : "uri"
           }
         }
+      },
+      "Purchase" : {
+        "type" : "object",
+        "properties" : {
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "priceCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "quantity" : {
+            "$ref" : "#/components/schemas/Quantity"
+          }
+        },
+        "required" : [ "quantity" ]
+      },
+      "PurchaseRequest" : {
+        "type" : "object",
+        "properties" : {
+          "note" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "priceCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "quantity" : {
+            "type" : "number",
+            "format" : "double",
+            "exclusiveMinimum" : 0
+          },
+          "unit" : {
+            "$ref" : "#/components/schemas/Unit"
+          }
+        },
+        "required" : [ "quantity", "unit" ]
       },
       "Quantity" : {
         "type" : "object",
@@ -3635,6 +3858,13 @@
               "type" : "string"
             }
           },
+          "purchase" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Purchase"
+            }, {
+              "type" : "null"
+            } ]
+          },
           "quantities" : {
             "type" : "array",
             "items" : {
@@ -3713,6 +3943,10 @@
               "type" : "null"
             } ]
           },
+          "startAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
           "title" : {
             "type" : "string"
           }
@@ -3752,6 +3986,10 @@
             }, {
               "type" : "null"
             } ]
+          },
+          "startAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
           },
           "title" : {
             "type" : "string",

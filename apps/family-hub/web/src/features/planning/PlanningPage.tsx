@@ -6,8 +6,10 @@ import { api, unwrap, type Schemas } from '../../api/client.ts'
 import { useSession } from '../../app/useSession.ts'
 import { useAction } from '../../app/useAction.ts'
 import { addDays, addMonths, monthGrid, nowLocal, today, weekDays } from '../../lib/dates.ts'
+import { entryItem, taskItem, type CalendarItem } from '../../lib/calendar.ts'
 import { formatDate, formatMonth } from '../../lib/format.ts'
 import { Button, ErrorMessage, MemberDot, PageHeader } from '../../components/ui.tsx'
+import { ItemDialog } from '../todo/ItemDialog.tsx'
 import { EntryDialog } from './EntryDialog.tsx'
 import { MonthView } from './MonthView.tsx'
 import { WeekView } from './WeekView.tsx'
@@ -22,7 +24,7 @@ function useHolidays(years: number[]): Record<string, string> {
   })
 }
 
-type Modal = { occurrence: Schemas['Occurrence'] } | { start: string } | null
+type Modal = { occurrence: Schemas['Occurrence'] } | { task: Schemas['TodoItem'] } | { start: string } | null
 
 export function PlanningPage() {
   const { members } = useSession()
@@ -40,8 +42,19 @@ export function PlanningPage() {
     queryKey: ['planning', 'occurrences', from, to], placeholderData: (previous) => previous,
     queryFn: () => unwrap(api().GET('/api/planning/occurrences', { params: { query: { from, to } } })),
   })
+  const tasks = useQuery({
+    queryKey: ['todo', 'scheduled', from, to], placeholderData: (previous) => previous,
+    queryFn: () => unwrap(api().GET('/api/todo/scheduled', { params: { query: { from, to } } })),
+  })
+  const lists = useQuery({ queryKey: ['todo', 'lists'], queryFn: () => unwrap(api().GET('/api/todo/lists')) })
   const holidays = useHolidays([Number(from.slice(0, 4)), Number(to.slice(0, 4))])
-  const visible = (occurrences.data ?? []).filter((o) => !filter.length || o.entry.memberIds.some((id) => filter.includes(id)))
+  const entries = (occurrences.data ?? [])
+    .filter((o) => !filter.length || o.entry.memberIds.some((id) => filter.includes(id))).map(entryItem)
+  const dueTasks = (tasks.data ?? [])
+    .filter((t) => !filter.length || (t.assigneeId !== null && t.assigneeId !== undefined && filter.includes(t.assigneeId)))
+    .map(taskItem).filter((item): item is CalendarItem => item !== null)
+  const visible = [...entries, ...dueTasks]
+  const open = (item: CalendarItem) => setModal(item.kind === 'entry' ? { occurrence: item.occurrence } : { task: item.task })
   const move = (step: number) => setAnchor(view === 'week' ? addDays(anchor, 7 * step) : addMonths(anchor, step))
 
   const mealShopping = useAction(() => unwrap(api().POST('/api/planning/meals/shopping', { body: { from: days[0] ?? from, to: days[6] ?? to } })), {
@@ -86,13 +99,15 @@ export function PlanningPage() {
           })}
         </div>
       </div>
-      <ErrorMessage error={occurrences.error} />
+      <ErrorMessage error={occurrences.error ?? tasks.error} />
       {view === 'week'
-        ? <WeekView days={days} occurrences={visible} holidays={holidays} onCreate={(start) => setModal({ start })}
-            onOpen={(occurrence) => setModal({ occurrence })} />
-        : <MonthView weeks={weeks} month={anchor.slice(0, 7)} occurrences={visible} holidays={holidays}
-            onCreate={(start) => setModal({ start })} onOpen={(occurrence) => setModal({ occurrence })} />}
-      {modal && <EntryDialog {...modal} onClose={() => setModal(null)} />}
+        ? <WeekView days={days} items={visible} holidays={holidays} onCreate={(start) => setModal({ start })} onOpen={open} />
+        : <MonthView weeks={weeks} month={anchor.slice(0, 7)} items={visible} holidays={holidays}
+            onCreate={(start) => setModal({ start })} onOpen={open} />}
+      {modal && 'task' in modal && lists.data && (
+        <ItemDialog item={modal.task} listId={modal.task.listId} lists={lists.data} onClose={() => setModal(null)} />
+      )}
+      {modal && !('task' in modal) && <EntryDialog {...modal} onClose={() => setModal(null)} />}
     </>
   )
 }

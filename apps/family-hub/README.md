@@ -17,8 +17,8 @@ Family organizer shared by every member of the household: planning at minute pre
 |---|---|
 | Planning | Week and month views, entries at the minute, all-day and multi-day entries, recurrence (daily, weekly on chosen days, monthly, yearly, every *n*), skipped occurrences, attendees, French public holidays, iCalendar subscription for phones |
 | Entry types | `EVENT` (holidays, day camp, taxes, sport, health…, with an estimated cost), `SHOPPING` (linked to a list), `MEAL` (recipe and servings), `ACCOUNTING` (month report or approval session) |
-| To-do | Lists, assignee, due date-time, priority, repeating chores that recreate themselves when done |
-| Shopping | Lists grouped by store type (supermarket, DIY, garden, clothing…) and aisle, manual items and recipe ingredients added up per item, clothes and shoes bought for a member with their size, estimated cost, recipes cookable with the list, completion with the amount paid in each kind of shop |
+| To-do | Lists, assignee, optional start and due date-times, priority, repeating chores that recreate themselves when done; dated to-dos also appear in the planning (week and month), with their priority visible |
+| Shopping | Lists grouped by store type (supermarket, DIY, garden, clothing…) and aisle, manual items and recipe ingredients added up per item (ingredients already at home can be unchecked when adding a recipe), list renaming, rows editable (quantity, unit and price actually bought, back to the computed value on demand), clothes and shoes bought for a member with their size, estimated cost, recipes cookable with the list, completion with the amount paid in each kind of shop |
 | Recipes | Ingredients from the catalog, scaling to any number of servings, add to a list, plan as a meal |
 | Catalog | Goods and ingredients with store type, aisle, unit and estimated price; a starter catalog is provided |
 | Budget (parents) | Accounts and balances, envelopes per category grouped by the 50/30/20 rule, transactions planned, pending and approved, recurring bills and income, month and year reports |
@@ -88,6 +88,8 @@ The Pages build carries a Content Security Policy that only allows calls to HTTP
 | `GET /actuator/prometheus` | Prometheus metrics, including the business metrics below. |
 | `GET /actuator/info` | Version, build time and Java runtime. |
 | `GET /api/admin/backup` | Parents only: consistent copy of the database (`VACUUM INTO`), taken while the service runs. |
+| `POST /api/admin/restore` | Parents only: replaces the whole database with the uploaded backup file (`application/octet-stream`, 200 MB at most). The file is checked first (integrity, schema not newer than the service, at least one parent), then Flyway upgrades an older backup. Everyone is signed out afterwards. |
+| `POST /api/setup/restore` | Same body, without signing in, and only while no member exists (like `/api/setup`): sets up a fresh instance from a backup. `409` otherwise. |
 | `GET /api/planning/feed/{token}.ics` | iCalendar feed; the token is created in *Famille* and can be revoked. |
 | `POST /api/auth/login` | Returns an access token for `Authorization: Bearer <token>`, valid 30 days after its last use. Five failures for a username within 15 minutes answer `429` with `Retry-After`. |
 | `/api/**` | JSON API used by the UI, Bearer token required. Contract: [`web/src/api/openapi.json`](web/src/api/openapi.json) (OpenAPI 3.1), checked by `OpenApiContractTest`. |
@@ -97,6 +99,20 @@ The Pages build carries a Content Security Policy that only allows calls to HTTP
 - The container runs as UID `10001` with a read-only root filesystem. `/tmp` must allow `exec`: the SQLite driver loads its native library from there.
 - Shutdown is graceful (30 seconds). The database is migrated by Flyway at startup.
 - Backup: download `/api/admin/backup` from the UI (*Famille*), or copy `DATA_DIR` while the container is stopped. Do not copy `family-hub.db` alone while it runs: recent changes may still be in `family-hub.db-wal`.
+
+### Backup, restore and automation
+
+The backup file holds the whole configuration (members and password hashes, lists, planning, budget), so it is the way to move or rebuild an instance. Restore it from *Famille* (*Restaurer une sauvegarde*), from the first-run screen, or by script:
+
+```bash
+TOKEN=$(curl -fsS -X POST https://nas.example/api/auth/login -H 'Content-Type: application/json' \
+  -d '{"username":"alex","password":"…"}' | jq -r .token)
+curl -fsS -H "Authorization: Bearer $TOKEN" https://nas.example/api/admin/backup -o family-hub.db
+curl -fsS -X POST --data-binary @family-hub.db -H 'Content-Type: application/octet-stream' \
+  https://nas.example/api/setup/restore   # fresh instance only, before exposing it
+```
+
+Every other setting can be scripted through the documented API (`/v3/api-docs`).
 
 ## Observability
 
@@ -128,7 +144,7 @@ With `OTEL_EXPORTER_OTLP_ENDPOINT` set, the agent exports:
 | `auth_token` | Hashed access tokens, last use |
 | `item` | Catalog |
 | `recipe`, `recipe_ingredient` | Recipes |
-| `shopping_list`, `shopping_list_recipe`, `shopping_line` | Shopping lists |
+| `shopping_list`, `shopping_list_recipe`, `shopping_line`, `shopping_purchase` | Shopping lists, and what is actually bought for a row when it differs from what is needed |
 | `planning_entry`, `planning_entry_member`, `planning_exception` | Planning |
 | `todo_list`, `todo_item` | To-do lists |
 | `account`, `budget_category`, `ledger_transaction`, `recurring_transaction` | Budget |

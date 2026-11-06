@@ -119,4 +119,18 @@ export function entryColor(entry: Pick<Schemas['PlanningEntry'], 'type' | 'categ
   return TYPE_COLORS[entry.type]
 }
 
+/**
+ * Chips of to-dos in the planning: a surface background with a coloured left border, so they differ from the
+ * filled chips of planning entries; the priority shows in the border and the weight.
+ */
+const TASK_COLORS: Labels<Schemas['Priority']> = {
+  HIGH: 'bg-surface text-ink border border-line border-l-4 border-l-red-600 font-bold',
+  NORMAL: 'bg-surface text-ink border border-line border-l-4 border-l-slate-500',
+  LOW: 'bg-surface text-ink-3 border border-line border-l-4 border-l-slate-300',
+}
+
+export function taskColor(priority: Schemas['Priority']): string {
+  return TASK_COLORS[priority]
+}
+
 export const MEMBER_COLORS = ['#2563eb', '#db2777', '#16a34a', '#ea580c', '#7c3aed', '#0891b2', '#ca8a04', '#475569']

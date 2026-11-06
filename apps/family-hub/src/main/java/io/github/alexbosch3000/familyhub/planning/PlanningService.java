@@ -154,7 +154,7 @@ public class PlanningService {
                         ? "Courses du " + DAY_MONTH.format(from) + " au " + DAY_MONTH.format(to) : name,
                 from).id();
         for (Occurrence meal : meals) {
-            shopping.addRecipe(listId, meal.entry().recipeId(), meal.entry().servings());
+            shopping.addRecipe(listId, meal.entry().recipeId(), meal.entry().servings(), List.of());
         }
         return new MealShopping(listId, meals.size());
     }

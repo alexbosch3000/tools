@@ -5,10 +5,13 @@ import io.github.alexbosch3000.familyhub.catalog.Quantity;
 import io.github.alexbosch3000.familyhub.catalog.Unit;
 import io.github.alexbosch3000.familyhub.shared.Db;
 import io.github.alexbosch3000.familyhub.shopping.ListedRecipe;
+import io.github.alexbosch3000.familyhub.shopping.Purchase;
 import io.github.alexbosch3000.familyhub.shopping.ShoppingStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -102,6 +105,46 @@ public class ShoppingRepository {
     public int setRowChecked(long listId, long itemId, @Nullable Long memberId, boolean checked) {
         return jdbc.sql("UPDATE shopping_line SET checked = ? WHERE list_id = ? AND item_id = ? AND member_id IS ?")
                 .params(checked, listId, itemId, memberId).update();
+    }
+
+    public boolean rowExists(long listId, long itemId, @Nullable Long memberId) {
+        Integer count = jdbc.sql(
+                "SELECT COUNT(*) FROM shopping_line WHERE list_id = ? AND item_id = ? AND member_id IS ?")
+                .params(listId, itemId, memberId).query(Integer.class).single();
+        return count != null && count > 0;
+    }
+
+    public Map<ShoppingRows.RowKey, Purchase> findPurchases(long listId) {
+        Map<ShoppingRows.RowKey, Purchase> purchases = new HashMap<>();
+        jdbc.sql("SELECT * FROM shopping_purchase WHERE list_id = ?").param(listId).query(rs -> {
+            purchases.put(new ShoppingRows.RowKey(rs.getLong("item_id"), Db.nullableLong(rs, "member_id")),
+                    new Purchase(new Quantity(rs.getDouble("quantity"), Unit.valueOf(rs.getString("unit"))),
+                            Db.nullableLong(rs, "price_cents"), rs.getString("note")));
+        });
+        return purchases;
+    }
+
+    public void savePurchase(long listId, long itemId, @Nullable Long memberId, Purchase purchase) {
+        deletePurchase(listId, itemId, memberId);
+        jdbc.sql("""
+                INSERT INTO shopping_purchase (list_id, item_id, member_id, quantity, unit, price_cents, note)
+                VALUES (?, ?, ?, ?, ?, ?, ?)""")
+                .params(listId, itemId, memberId, purchase.quantity().amount(), purchase.quantity().unit().name(),
+                        purchase.priceCents(), purchase.note())
+                .update();
+    }
+
+    public int deletePurchase(long listId, long itemId, @Nullable Long memberId) {
+        return jdbc.sql("DELETE FROM shopping_purchase WHERE list_id = ? AND item_id = ? AND member_id IS ?")
+                .params(listId, itemId, memberId).update();
+    }
+
+    /** Deletes the purchases of rows that no longer have any line, after a recipe was removed. */
+    public void deleteOrphanPurchases(long listId) {
+        jdbc.sql("""
+                DELETE FROM shopping_purchase WHERE list_id = ? AND NOT EXISTS (SELECT 1 FROM shopping_line l
+                  WHERE l.list_id = shopping_purchase.list_id AND l.item_id = shopping_purchase.item_id
+                    AND l.member_id IS shopping_purchase.member_id)""").param(listId).update();
     }
 
     public List<ListedRecipe> findRecipes(long listId) {
