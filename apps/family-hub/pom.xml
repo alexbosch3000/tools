@@ -28,7 +28,7 @@
     <spring-modulith.version>2.1.2</spring-modulith.version>
     <springdoc.version>3.2.0</springdoc.version>
     <!-- Agent and annotations are released together. -->
-    <opentelemetry-instrumentation.version>2.33.1</opentelemetry-instrumentation.version>
+    <opentelemetry-instrumentation.version>2.34.0</opentelemetry-instrumentation.version>
 
     <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
     <ossindex.plugin.version>3.2.0</ossindex.plugin.version>
