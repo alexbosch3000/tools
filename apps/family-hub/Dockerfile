@@ -1,7 +1,7 @@
 # Builds the React user interface and the Spring Boot jar that serves it, then runs the service on a
 # JRE-only image as a non-root user. Base images are pinned by digest; Dependabot keeps them up to date.
 
-FROM node:26-alpine@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS web
+FROM node:26-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS web
 WORKDIR /web
 COPY web/package.json web/package-lock.json ./
 # --ignore-scripts: the `prepare` hook generates API types from sources not copied yet; `npm run build` does it.
